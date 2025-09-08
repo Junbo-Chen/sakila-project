@@ -1,0 +1,41 @@
+extends layout
+
+block content
+  .row
+    .col-lg-8.mx-auto.text-center
+      .card.border-0.shadow-lg
+        .card-body.p-5
+          h1.display-4.text-primary.mb-4
+            i.bi.bi-film.me-3
+            | Welcome to Sakila Dashboard
+          p.lead.text-muted.mb-4 
+            | Beheer je filmdatabase met deze moderne MVC applicatie. 
+            | Bekijk, bewerk en voeg actors toe aan je Sakila database.
+          
+          .row.g-4.mt-3
+            .col-md-6
+              .card.bg-primary.text-white.h-100
+                .card-body.text-center
+                  i.bi.bi-people-fill.display-1.mb-3
+                  h4 Actors
+                  p.mb-3 Bekijk en beheer alle actors in de database
+                  a.btn.btn-light.btn-lg(href="/actor") 
+                    | 🎭 Bekijk Actors
+                    i.bi.bi-arrow-right.ms-2
+            
+            .col-md-6
+              .card.bg-secondary.text-white.h-100
+                .card-body.text-center
+                  i.bi.bi-gear-fill.display-1.mb-3
+                  h4 Coming Soon
+                  p.mb-3 Meer functies komen binnenkort beschikbaar
+                  button.btn.btn-light.btn-lg(disabled) 
+                    | 🔧 Binnenkort
+          
+          .row.mt-5
+            .col-12
+              .alert.alert-info
+                h5.alert-heading
+                  i.bi.bi-info-circle.me-2
+
+                p.mb-0

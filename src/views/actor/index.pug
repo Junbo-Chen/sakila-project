@@ -1,0 +1,85 @@
+extends ../layout
+
+block content
+  .d-flex.justify-content-between.align-items-center.mb-4
+    h2.text-primary 🎭 Actors
+    a.btn.btn-success(href="#addActorModal" data-bs-toggle="modal") 
+      | ➕ Nieuwe Actor
+  
+  if actors && actors.length
+    .card
+      .card-header.bg-primary.text-white
+        h5.mb-0 Alle Actors (#{actors.length})
+      .card-body.p-0
+        table.table.table-striped.table-hover.mb-0
+          thead.table-dark
+            tr
+              th ID
+              th Voornaam  
+              th Achternaam
+              th Acties
+          tbody
+            each actor in actors
+              tr
+                td #{actor.actor_id}
+                td #{actor.first_name}
+                td #{actor.last_name}
+                td
+                  .btn-group(role="group")
+                    button.btn.btn-sm.btn-warning.me-1(
+                      onclick=`editActor(${actor.actor_id}, '${actor.first_name}', '${actor.last_name}')`
+                    ) ✏️ Edit
+                    form.d-inline(method="POST" action=`/actor/delete/${actor.actor_id}` 
+                                   onsubmit="return confirm('Weet je zeker dat je deze actor wilt verwijderen?')")
+                      button.btn.btn-sm.btn-danger(type="submit") 🗑️ Delete
+  else
+    .alert.alert-info.text-center
+      h4 😔 Geen actors gevonden
+      p Er zijn nog geen actors in de database.
+      a.btn.btn-primary(href="#addActorModal" data-bs-toggle="modal") Voeg de eerste actor toe
+
+  // Add Actor Modal
+  #addActorModal.modal.fade(tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5.modal-title Nieuwe Actor Toevoegen
+          button.btn-close(type="button" data-bs-dismiss="modal")
+        form(method="POST" action="/actor/add")
+          .modal-body
+            .mb-3
+              label.form-label(for="firstName") Voornaam *
+              input.form-control(type="text" id="firstName" name="firstName" required maxlength="45")
+            .mb-3
+              label.form-label(for="lastName") Achternaam *
+              input.form-control(type="text" id="lastName" name="lastName" required maxlength="45")
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Annuleren
+            button.btn.btn-primary(type="submit") Actor Toevoegen
+
+  // Edit Actor Modal
+  #editActorModal.modal.fade(tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5.modal-title Actor Bewerken
+          button.btn-close(type="button" data-bs-dismiss="modal")
+        form#editActorForm(method="POST")
+          .modal-body
+            .mb-3
+              label.form-label(for="editFirstName") Voornaam *
+              input.form-control(type="text" id="editFirstName" name="firstName" required maxlength="45")
+            .mb-3
+              label.form-label(for="editLastName") Achternaam *
+              input.form-control(type="text" id="editLastName" name="lastName" required maxlength="45")
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Annuleren
+            button.btn.btn-primary(type="submit") Wijzigingen Opslaan
+
+  script.
+    function editActor(id, firstName, lastName) {
+      document.getElementById('editFirstName').value = firstName;
+      document.getElementById('editLastName').value = lastName;
+      document.getElementById('editActorForm').action = '/actor/edit/' + id;
+      new bootstrap.Modal(document.getElementById('editActorModal')).show();
+    }

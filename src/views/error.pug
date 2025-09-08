@@ -1,0 +1,30 @@
+extends layout
+
+block content
+  .row
+    .col-lg-8.mx-auto
+      .card.border-danger
+        .card-header.bg-danger.text-white
+          h4.mb-0
+            i.bi.bi-exclamation-triangle.me-2
+            | Er is een fout opgetreden
+        .card-body
+          h2.text-danger= message
+          
+          if error.status
+            .alert.alert-warning
+              strong Status Code: 
+              | #{error.status}
+          
+          if error.stack && (process.env.NODE_ENV === 'development')
+            .alert.alert-secondary
+              h5 Stack Trace (Development Mode):
+              pre.small= error.stack
+          
+          .mt-4
+            a.btn.btn-primary.me-2(href="/") 
+              i.bi.bi-house.me-1
+              | Terug naar Home
+            a.btn.btn-secondary(href="/actor") 
+              i.bi.bi-people.me-1
+              | Bekijk Actors
