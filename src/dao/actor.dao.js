@@ -3,7 +3,6 @@ const Actor = require("../models/actor");
 
 const actorDAO = {
   getAll(callback) {
-    console.log('🔍 Attempting to fetch all actors...');
     pool.query(
       "SELECT actor_id, first_name, last_name FROM actor",
       (err, rows) => {
