@@ -1,7 +1,9 @@
+const { validate } = require("../controllers/actor.controller");
 const actorDAO = require("../dao/actor.dao");
 const { logger } = require("../util/logger");
 
 const actorService = {
+  validate: validate,
   getAll: (callback) => {
     logger.info("Fetching all actors");
     actorDAO.getAll(callback);
