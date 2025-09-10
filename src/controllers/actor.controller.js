@@ -3,6 +3,24 @@ const { getById } = require("../dao/actor.dao");
 const actorService = require("../services/actor.service");
 
 const actorController = {
+  validate: (req, res, next) => {
+    const { firstName, lastName } = req.body;
+    const errors = [];
+    if (!firstName || firstName.trim() === "") {
+      errors.push("First name is required");
+    }
+    if (!lastName || lastName.trim() === "") {
+      errors.push("Last name is required");
+    }
+    if (errors.length > 0) {
+      return res.status(400).render("actor/form", {
+        errors,
+        actor: { firstName, lastName },
+        title: "Actor Form"
+      });
+    }
+    next();
+  },
   getAll: (req, res, next) => {
     actorService.getAll((err, actors) => {
       if (err) {
