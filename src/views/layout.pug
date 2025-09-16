@@ -13,19 +13,29 @@ html
       .container
         a.navbar-brand(href="/")
           i.bi.bi-film.me-2
-          | 🎬 Sakila Dashboard
+          | Sakila Dashboard
         button.navbar-toggler(type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav")
           span.navbar-toggler-icon
         #navbarNav.collapse.navbar-collapse
           ul.navbar-nav.ms-auto
             li.nav-item
-              a.nav-link(href="/")
+              a.nav-link(href="/") 
                 i.bi.bi-house.me-1
                 | Home
-            li.nav-item
-              a.nav-link(href="/actor")
-                i.bi.bi-people.me-1
-                | Actors
+
+            if !user
+              li.nav-item
+                a.nav-link(href="/auth/login") Login
+            else
+              if userRole === 'staff'
+                li.nav-item
+                  a.nav-link(href="/staff/dashboard") Dashboard
+              else if userRole === 'customer'
+                li.nav-item
+                  a.nav-link(href="/customer/dashboard") Dashboard
+              li.nav-item
+                a.nav-link(href="/auth/logout") Logout
+
     
     .main-content
       .container.py-4

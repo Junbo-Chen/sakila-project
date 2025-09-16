@@ -1,7 +1,21 @@
 const authService = require('../services/auth.service');
 const { logger } = require('../util/logger');
+// const { validate } = require('./actor.controller');
 
 const authController = {
+  validate: (req, res, next) => {
+    const { email, password, role } = req.body;
+    authService.validate(email, password, role, (error) => {
+      if (error) {
+        logger.error(`Validation error: ${error.message}`);
+        return res.render('auth/login', {
+          title: 'Login',
+          error: error.message
+        });
+      }
+      next();
+    });
+  },
   login: (req, res) => {
     const { email, password, role } = req.body;
     
@@ -27,11 +41,7 @@ const authController = {
       
       logger.info(`User ${user.first_name} logged in as ${role}`);
       
-      // Redirect naar juiste dashboard
       switch (role) {
-        case 'admin':
-          res.redirect('/admin/dashboard');
-          break;
         case 'staff':
           res.redirect('/staff/dashboard');
           break;
@@ -52,6 +62,13 @@ const authController = {
       res.redirect('/auth/login');
     });
   },
+  isLoggedIn: (req, res, next) => {
+    if (req.session && req.session.user) {
+      next();
+    } else {
+      res.redirect('/auth/login');
+    }
+  },
   
   // Demo login voor testing (zonder wachtwoord)
   demoLogin: (req, res) => {
@@ -59,14 +76,6 @@ const authController = {
     
     let demoUser;
     switch (role) {
-      case 'admin':
-        demoUser = { 
-          id: 1, 
-          first_name: 'Admin', 
-          last_name: 'User',
-          email: 'admin@sakila.com'
-        };
-        break;
       case 'staff':
         demoUser = { 
           staff_id: 1, 

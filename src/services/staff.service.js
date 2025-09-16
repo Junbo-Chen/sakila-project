@@ -7,20 +7,19 @@ const staffService = {
     staffDAO.getDashboardStats(staffId, callback);
   },
 
-  getActiveRentals: (staffId, callback) => {
-    logger.info(`Getting active rentals for staff ID: ${staffId}`);
-    staffDAO.getActiveRentals(staffId, callback);
+  getActiveRentals: (staffId, page, callback) => {
+    logger.info(`Getting active rentals for staff ID: ${staffId}, page: ${page}`);
+    staffDAO.getActiveRentals(staffId, page, callback);
   },
 
-  getAvailableFilms: (callback) => {
+  getAvailableFilms: (page, callback) => {
     logger.info('Getting available films for rental');
-    staffDAO.getAvailableFilms(callback);
+    staffDAO.getAvailableFilms(callback, page);
   },
 
   createRental: (customerId, inventoryId, staffId, callback) => {
     logger.info(`Creating rental: customer ${customerId}, inventory ${inventoryId}, staff ${staffId}`);
-    
-    // Validatie
+
     if (!customerId || !inventoryId || !staffId) {
       return callback(new Error('Alle velden zijn verplicht'));
     }

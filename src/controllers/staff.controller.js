@@ -25,8 +25,9 @@ const staffController = {
 
   getRentals: (req, res) => {
     const staffId = req.session.user.staff_id || 1;
-    
-    staffService.getActiveRentals(staffId, (err, rentals) => {
+    const page = parseInt(req.query.page) || 1;
+
+    staffService.getActiveRentals(staffId, page, (err, data) => {
       if (err) {
         return res.render('error', { 
           title: 'Rentals Error', 
@@ -37,13 +38,19 @@ const staffController = {
       
       res.render('staff/rentals', {
         title: 'Actieve Verhuur',
-        rentals: rentals
+        rentals: data.rentals,
+        currentPage: data.page,
+        totalPages: data.pages
       });
     });
   },
 
+
   newRentalForm: (req, res) => {
-    staffService.getAvailableFilms((err, films) => {
+    const staffId = req.session.user.staff_id || 1;
+    const page = parseInt(req.query.page) || 1;
+
+    staffService.getAvailableFilms(page, (err, data) => { // let op: 'data' hier
       if (err) {
         return res.render('error', { 
           title: 'Films Error', 
@@ -51,13 +58,17 @@ const staffController = {
           error: err 
         });
       }
-      
-      res.render('staff/new-rental', {
+
+      res.render('staff/rentalCreate', {
         title: 'Nieuwe Verhuur',
-        films: films
+        films: data.films,      // array van films
+        currentPage: data.page,
+        totalPages: data.pages
       });
     });
   },
+
+
 
   createRental: (req, res) => {
     const { customer_id, inventory_id } = req.body;
@@ -66,7 +77,7 @@ const staffController = {
     staffService.createRental(customer_id, inventory_id, staff_id, (err, rental) => {
       if (err) {
         logger.error(`Create rental error: ${err.message}`);
-        return res.render('staff/new-rental', {
+        return res.render('staff/rentalCreate', {
           title: 'Nieuwe Verhuur',
           error: 'Kon verhuur niet aanmaken: ' + err.message
         });

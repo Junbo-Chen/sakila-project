@@ -1,0 +1,234 @@
+extends ../layout
+
+block content
+  .row
+    .col-lg-8.mx-auto
+      .card
+        .card-header.bg-success.text-white
+          h4.mb-0
+            i.bi.bi-plus-circle.me-2
+            | Nieuwe Verhuur Aanmaken
+        .card-body
+          if error
+            .alert.alert-danger
+              i.bi.bi-exclamation-triangle.me-2
+              | #{error}
+          
+          form(method="POST" action="/staff/rentals/create")
+            .row
+              .col-md-6
+                .mb-3
+                  label.form-label(for="customer_search") Zoek Klant
+                  .input-group
+                    input.form-control(type="text" id="customer_search" placeholder="Voer naam of email in...")
+                    button.btn.btn-outline-secondary(type="button" onclick="searchCustomers()")
+                      i.bi.bi-search
+                
+                #customer_results.mb-3
+                
+                input(type="hidden" id="customer_id" name="customer_id" required)
+                
+                .mb-3
+                  label.form-label Geselecteerde Klant
+                  .alert.alert-light.d-none#selected_customer
+                    span#customer_info
+              
+              .col-md-6
+                .mb-3
+                  label.form-label(for="film_search") Zoek Film
+                  .input-group
+                    input.form-control(type="text" id="film_search" placeholder="Voer filmtitel in...")
+                    button.btn.btn-outline-secondary(type="button" onclick="searchFilms()")
+                      i.bi.bi-search
+                
+                #film_results.mb-3
+                
+                input(type="hidden" id="inventory_id" name="inventory_id" required)
+                
+                .mb-3
+                  label.form-label Geselecteerde Film
+                  .alert.alert-light.d-none#selected_film
+                    span#film_info
+            
+            .row
+              .col-12
+                .d-flex.justify-content-between
+                  a.btn.btn-secondary(href="/staff/rentals")
+                    i.bi.bi-arrow-left.me-2
+                    | Terug naar Overzicht
+                  button.btn.btn-success(type="submit" id="submit_btn" disabled)
+                    i.bi.bi-check-circle.me-2
+                    | Verhuur Aanmaken
+
+  // Available Films List
+  if films && films.length
+    .row.mt-4
+      .col-12
+        .card
+          .card-header.bg-info.text-white
+            h5.mb-0
+              i.bi.bi-film.me-2
+              | Beschikbare Films
+          .card-body.p-0
+            .table-responsive
+              table.table.table-hover.mb-0
+                thead.table-light
+                  tr
+                    th Film
+                    th Categorie
+                    th Speeltijd
+                    th Rating
+                    th Tarief
+                    th Beschikbaar
+                    th Actie
+                tbody
+                  each film in films
+                    tr
+                      td
+                        strong #{film.title}
+                        br
+                        small.text-muted #{film.description ? film.description.substring(0, 50) + '...' : ''}
+                      td #{film.category}
+                      td #{film.length} min
+                      td
+                        span.badge.bg-secondary #{film.rating}
+                      td €#{film.rental_rate}
+                      td
+                        span.badge.bg-success #{film.available_copies} stuks
+                      td
+                        button.btn.btn-sm.btn-primary(onclick=`selectFilm(${film.film_id}, '${film.title}', ${film.rental_rate})`)
+                          i.bi.bi-check.me-1
+                          | Selecteer
+
+        if totalPages > 1
+  nav.mt-3
+    ul.pagination.justify-content-center
+      li.page-item(class=currentPage === 1 ? 'disabled' : '')
+        a.page-link(href=`/staff/rentalCreate?page=${currentPage - 1}`) Vorige
+
+      each num in [...Array(totalPages).keys()].map(n => n + 1)
+        li.page-item(class=num === currentPage ? 'active' : '')
+          a.page-link(href=`/staff/rentalCreate?page=${num}`) #{num}
+
+      li.page-item(class=currentPage === totalPages ? 'disabled' : '')
+        a.page-link(href=`/staff/rentalCreate?page=${currentPage + 1}`) Volgende
+
+  script.
+    let selectedCustomer = null;
+    let selectedFilm = null;
+
+    function searchCustomers() {
+      const query = document.getElementById('customer_search').value;
+      if (query.length < 2) return;
+      
+      fetch(`/staff/customers/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.customers) {
+            displayCustomers(data.customers);
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function displayCustomers(customers) {
+      const resultsDiv = document.getElementById('customer_results');
+      if (customers.length === 0) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning">Geen klanten gevonden</div>';
+        return;
+      }
+      
+      let html = '<div class="list-group">';
+      customers.forEach(customer => {
+        html += `
+          <button type="button" class="list-group-item list-group-item-action" 
+                  onclick="selectCustomer(${customer.customer_id}, '${customer.full_name}', '${customer.email}')">
+            <strong>${customer.full_name}</strong><br>
+            <small class="text-muted">${customer.email} - ID: ${customer.customer_id}</small>
+          </button>
+        `;
+      });
+      html += '</div>';
+      resultsDiv.innerHTML = html;
+    }
+
+    function selectCustomer(id, name, email) {
+      selectedCustomer = { id, name, email };
+      document.getElementById('customer_id').value = id;
+      document.getElementById('customer_info').textContent = `${name} (${email})`;
+      document.getElementById('selected_customer').classList.remove('d-none');
+      document.getElementById('customer_results').innerHTML = '';
+      checkFormComplete();
+    }
+
+    function searchFilms() {
+      const query = document.getElementById('film_search').value;
+      if (query.length < 2) return;
+      
+      fetch(`/staff/films/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.films) {
+            displayFilms(data.films);
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function displayFilms(films) {
+      const resultsDiv = document.getElementById('film_results');
+      if (films.length === 0) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning">Geen films gevonden</div>';
+        return;
+      }
+      
+      let html = '<div class="list-group">';
+      films.forEach(film => {
+        const available = film.total_copies - (film.rented_out || 0);
+        if (available > 0) {
+          html += `
+            <button type="button" class="list-group-item list-group-item-action" 
+                    onclick="selectFilm(${film.film_id}, '${film.title}', ${film.rental_rate})">
+              <strong>${film.title}</strong> (${film.release_year})<br>
+              <small class="text-muted">€${film.rental_rate} - ${available} beschikbaar</small>
+            </button>
+          `;
+        }
+      });
+      html += '</div>';
+      resultsDiv.innerHTML = html;
+    }
+
+    function selectFilm(id, title, rate) {
+      selectedFilm = { id, title, rate };
+      // Voor inventory_id, we nemen gewoon het film_id (in een echte app zou je een beschikbare inventory_id selecteren)
+      document.getElementById('inventory_id').value = id; 
+      document.getElementById('film_info').textContent = `${title} - €${rate}`;
+      document.getElementById('selected_film').classList.remove('d-none');
+      document.getElementById('film_results').innerHTML = '';
+      checkFormComplete();
+    }
+
+    function checkFormComplete() {
+      const submitBtn = document.getElementById('submit_btn');
+      if (selectedCustomer && selectedFilm) {
+        submitBtn.disabled = false;
+      } else {
+        submitBtn.disabled = true;
+      }
+    }
+
+    // Enable enter key for search
+    document.getElementById('customer_search').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchCustomers();
+      }
+    });
+
+    document.getElementById('film_search').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchFilms();
+      }
+    });

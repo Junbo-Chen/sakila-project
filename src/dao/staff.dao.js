@@ -1,4 +1,5 @@
 const pool = require('../db/sql/connection');
+const staff = require('../models/staff');
 
 const staffDAO = {
   getDashboardStats: (staffId, callback) => {
@@ -9,19 +10,29 @@ const staffDAO = {
         (SELECT COALESCE(SUM(p.amount), 0) FROM payment p WHERE p.staff_id = ? AND DATE(p.payment_date) = CURDATE()) as todays_revenue,
         (SELECT COUNT(DISTINCT r.customer_id) FROM rental r WHERE r.staff_id = ?) as total_customers
     `;
-    
+
     pool.query(query, [staffId, staffId, staffId, staffId], (err, rows) => {
       if (err) {
         console.error('❌ Error in getDashboardStats:', err);
         return callback(new Error(`Database error: ${err.message}`));
       }
-      
+
+      const stats = rows[0];
+      // ✅ Forceer number ipv string
+      stats.active_rentals = parseInt(stats.active_rentals) || 0;
+      stats.todays_rentals = parseInt(stats.todays_rentals) || 0;
+      stats.todays_revenue = parseFloat(stats.todays_revenue) || 0;
+      stats.total_customers = parseInt(stats.total_customers) || 0;
+
       console.log('✅ Successfully fetched dashboard stats');
-      callback(null, rows[0]);
+      callback(null, stats);
     });
   },
 
-  getActiveRentals: (staffId, callback) => {
+  getActiveRentals: (staffId, page, callback) => {
+    const limit = 15;
+    const offset = (page - 1) * limit;
+
     const query = `
       SELECT 
         r.rental_id,
@@ -37,21 +48,35 @@ const staffDAO = {
       JOIN film f ON i.film_id = f.film_id
       WHERE r.staff_id = ? AND r.return_date IS NULL
       ORDER BY r.rental_date DESC
-      LIMIT 50
+      LIMIT ? OFFSET ?
     `;
-    
-    pool.query(query, [staffId], (err, rows) => {
-      if (err) {
-        console.error('❌ Error in getActiveRentals:', err);
-        return callback(new Error(`Database error: ${err.message}`));
-      }
-      
-      console.log(`✅ Successfully fetched ${rows.length} active rentals`);
-      callback(null, rows);
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM rental r
+      WHERE r.staff_id = ? AND r.return_date IS NULL
+    `;
+
+    pool.query(query, [staffId, limit, offset], (err, rows) => {
+      if (err) return callback(err);
+
+      pool.query(countQuery, [staffId], (err2, countRows) => {
+        if (err2) return callback(err2);
+
+        callback(null, {
+          rentals: rows,
+          total: countRows[0].total,
+          page,
+          pages: Math.ceil(countRows[0].total / limit)
+        });
+      });
     });
   },
 
-  getAvailableFilms: (callback) => {
+  getAvailableFilms: (page, callback) => {
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
     const query = `
       SELECT 
         f.film_id,
@@ -61,27 +86,47 @@ const staffDAO = {
         f.length,
         f.rating,
         COUNT(i.inventory_id) as available_copies,
-        c.name as category
+        MAX(c.name) as category
       FROM film f
       JOIN film_category fc ON f.film_id = fc.film_id
       JOIN category c ON fc.category_id = c.category_id
       JOIN inventory i ON f.film_id = i.film_id
       LEFT JOIN rental r ON i.inventory_id = r.inventory_id AND r.return_date IS NULL
       WHERE r.rental_id IS NULL
-      GROUP BY f.film_id
+      GROUP BY f.film_id, f.title, f.description, f.rental_rate, f.length, f.rating
       HAVING available_copies > 0
       ORDER BY f.title
-      LIMIT 100
+      LIMIT ? OFFSET ?
     `;
-    
-    pool.query(query, (err, rows) => {
+
+    const countQuery = `
+      SELECT COUNT(DISTINCT f.film_id) as total
+      FROM film f
+      JOIN inventory i ON f.film_id = i.film_id
+      LEFT JOIN rental r ON i.inventory_id = r.inventory_id AND r.return_date IS NULL
+      WHERE r.rental_id IS NULL
+    `;
+
+    pool.query(query, [limit, offset], (err, rows) => {
       if (err) {
         console.error('❌ Error in getAvailableFilms:', err);
         return callback(new Error(`Database error: ${err.message}`));
       }
-      
-      console.log(`✅ Successfully fetched ${rows.length} available films`);
-      callback(null, rows);
+
+      pool.query(countQuery, (err2, countRows) => {
+        if (err2) return callback(err2);
+
+        const total = countRows[0].total;
+        const pages = Math.ceil(total / limit);
+
+        console.log(`✅ Successfully fetched ${rows.length} available films (Page ${page} of ${pages})`);
+        callback(null, { 
+          films: rows,
+          total: total,
+          page,
+          pages: pages
+        });
+      });
     });
   },
 
