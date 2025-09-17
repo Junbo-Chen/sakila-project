@@ -2,7 +2,7 @@ extends ../layout
 
 block content
   .row
-    .col-lg-8.mx-auto
+    .col-lg-12.mx-auto
       .card
         .card-header.bg-success.text-white
           h4.mb-0
@@ -34,21 +34,14 @@ block content
                     span#customer_info
               
               .col-md-6
-                .mb-3
-                  label.form-label(for="film_search") Zoek Film
-                  .input-group
-                    input.form-control(type="text" id="film_search" placeholder="Voer filmtitel in...")
-                    button.btn.btn-outline-secondary(type="button" onclick="searchFilms()")
-                      i.bi.bi-search
-                
-                #film_results.mb-3
-                
                 input(type="hidden" id="inventory_id" name="inventory_id" required)
                 
                 .mb-3
                   label.form-label Geselecteerde Film
                   .alert.alert-light.d-none#selected_film
                     span#film_info
+                    button.btn.btn-sm.btn-outline-danger.ms-2(type="button" onclick="clearFilmSelection()")
+                      i.bi.bi-x
             
             .row
               .col-12
@@ -60,75 +53,157 @@ block content
                     i.bi.bi-check-circle.me-2
                     | Verhuur Aanmaken
 
-  // Available Films List
-  if films && films.length
-    .row.mt-4
-      .col-12
-        .card
-          .card-header.bg-info.text-white
-            h5.mb-0
-              i.bi.bi-film.me-2
-              | Beschikbare Films
-          .card-body.p-0
-            .table-responsive
-              table.table.table-hover.mb-0
-                thead.table-light
-                  tr
-                    th Film
-                    th Categorie
-                    th Speeltijd
-                    th Rating
-                    th Tarief
-                    th Beschikbaar
-                    th Actie
-                tbody
-                  each film in films
-                    tr
-                      td
-                        strong #{film.title}
-                        br
-                        small.text-muted #{film.description ? film.description.substring(0, 50) + '...' : ''}
-                      td #{film.category}
-                      td #{film.length} min
-                      td
-                        span.badge.bg-secondary #{film.rating}
-                      td €#{film.rental_rate}
-                      td
-                        span.badge.bg-success #{film.available_copies} stuks
-                      td
-                        button.btn.btn-sm.btn-primary(onclick=`selectFilm(${film.film_id}, '${film.title}', ${film.rental_rate})`)
-                          i.bi.bi-check.me-1
-                          | Selecteer
+  .row.mt-4
+    .col-12
+      .card
+        .card-header.bg-info.text-white
+          h5.mb-0
+            i.bi.bi-film.me-2
+            | Beschikbare Films
+          .row.mt-3
+            .col-md-4
+              input.form-control(type="text" id="searchInput" placeholder="Zoek films..." value=searchQuery || '')
+            .col-md-4
+              select.form-select(id="filterCategory" name="category")
+                option(value="") Alle Categorieën
+                if categories
+                  each category in categories
+                    option(value=category selected=(selectedCategory === category)) #{category}
+            .col-md-4
+              button.btn.btn-light(onclick="resetFilters()")
+                i.bi.bi-arrow-clockwise.me-1
+                | Reset Filters
+        .card-body
+          #films-container
+            if films && films.length
+              .row.g-3
+                each film in films
+                  .col-xl-3.col-lg-4.col-md-6
+                    .card.h-100.film-card
+                      .card-body
+                        h6.card-title.text-primary #{film.title}
+                        if film.description
+                          p.card-text.small.text-muted #{film.description.substring(0, 80)}...
+                        .mb-2
+                          span.badge.bg-secondary.me-2 #{film.category}
+                          span.badge.bg-info.me-2 #{film.rating}
+                        .row.small.text-muted.mb-2
+                          .col-6
+                            i.bi.bi-clock.me-1
+                            | #{film.length} min
+                          .col-6
+                            i.bi.bi-currency-euro.me-1
+                            | #{film.rental_rate}
+                        .d-flex.justify-content-between.align-items-center
+                          span.badge.bg-success #{film.available_copies} beschikbaar
+                          button.btn.btn-sm.btn-primary(onclick=`selectFilmFromCard(${film.film_id}, '${film.title}', ${film.rental_rate})`)
+                            i.bi.bi-check.me-1
+                            | Selecteer
+            else
+              .text-center.py-4
+                i.bi.bi-film.fs-1.text-muted
+                p.text-muted Geen films beschikbaar
 
         if totalPages > 1
-  nav.mt-3
-    ul.pagination.justify-content-center
-      li.page-item(class=currentPage === 1 ? 'disabled' : '')
-        a.page-link(href=`/staff/rentalCreate?page=${currentPage - 1}`) Vorige
+        .card-footer
+          nav
+            ul.pagination.justify-content-center.mb-0
+              li.page-item(class=currentPage === 1 ? 'disabled' : '')
+                a.page-link(href=`?page=${currentPage - 1}&search=${searchQuery || ''}&category=${selectedCategory || ''}`) Vorige
 
-      each num in [...Array(totalPages).keys()].map(n => n + 1)
-        li.page-item(class=num === currentPage ? 'active' : '')
-          a.page-link(href=`/staff/rentalCreate?page=${num}`) #{num}
+              each num in [...Array(totalPages).keys()].map(n => n + 1)
+                li.page-item(class=num === currentPage ? 'active' : '')
+                  a.page-link(href=`?page=${num}&search=${searchQuery || ''}&category=${selectedCategory || ''}`) #{num}
 
-      li.page-item(class=currentPage === totalPages ? 'disabled' : '')
-        a.page-link(href=`/staff/rentalCreate?page=${currentPage + 1}`) Volgende
+              li.page-item(class=currentPage === totalPages ? 'disabled' : '')
+                a.page-link(href=`?page=${currentPage + 1}&search=${searchQuery || ''}&category=${selectedCategory || ''}`) Volgende
+
 
   script.
     let selectedCustomer = null;
     let selectedFilm = null;
+    let searchTimeout = null;
 
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set up search and filter event listeners
+      const searchInput = document.getElementById('searchInput');
+      const categoryFilter = document.getElementById('filterCategory');
+
+      // Debounced search
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          applyFilters();
+        }, 500); // Wait 500ms after user stops typing
+      });
+
+      categoryFilter.addEventListener('change', applyFilters);
+    });
+
+    function applyFilters() {
+      const searchTerm = document.getElementById('searchInput').value;
+      const category = document.getElementById('filterCategory').value;
+      
+      // Build URL with current filters
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', '1'); // Reset to page 1 when filtering
+      
+      if (searchTerm && searchTerm.trim() !== '') {
+        url.searchParams.set('search', searchTerm.trim());
+      } else {
+        url.searchParams.delete('search');
+      }
+      
+      if (category && category !== '') {
+        url.searchParams.set('category', category);
+      } else {
+        url.searchParams.delete('category');
+      }
+      
+      // Navigate to the filtered URL
+      window.location.href = url.toString();
+    }
+
+    function resetFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('filterCategory').value = '';
+      
+      // Navigate to clean URL
+      window.location.href = '/staff/rentalCreate';
+    }
+
+    function buildUrl(page) {
+      const url = new URL(window.location.href);
+
+      // Zet de page parameter
+      url.searchParams.set('page', page);
+
+      return url.toString();
+    }
+
+    // Customer search functions
     function searchCustomers() {
       const query = document.getElementById('customer_search').value;
-      if (query.length < 2) return;
+      if (query.length < 2) {
+        document.getElementById('customer_results').innerHTML = '';
+        return;
+      }
       
       fetch(`/staff/customers/search?q=${encodeURIComponent(query)}`)
         .then(response => response.json())
         .then(data => {
           if (data.customers) {
             displayCustomers(data.customers);
+          } else if (data.error) {
+            document.getElementById('customer_results').innerHTML = 
+              `<div class="alert alert-danger">${data.error}</div>`;
           }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+          console.error('Error:', error);
+          document.getElementById('customer_results').innerHTML = 
+            '<div class="alert alert-danger">Fout bij zoeken van klanten</div>';
+        });
     }
 
     function displayCustomers(customers) {
@@ -142,7 +217,7 @@ block content
       customers.forEach(customer => {
         html += `
           <button type="button" class="list-group-item list-group-item-action" 
-                  onclick="selectCustomer(${customer.customer_id}, '${customer.full_name}', '${customer.email}')">
+                  onclick="selectCustomer(${customer.customer_id}, '${customer.full_name.replace(/'/g, "\\'")}', '${customer.email}')">
             <strong>${customer.full_name}</strong><br>
             <small class="text-muted">${customer.email} - ID: ${customer.customer_id}</small>
           </button>
@@ -161,51 +236,26 @@ block content
       checkFormComplete();
     }
 
-    function searchFilms() {
-      const query = document.getElementById('film_search').value;
-      if (query.length < 2) return;
-      
-      fetch(`/staff/films/search?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.films) {
-            displayFilms(data.films);
-          }
-        })
-        .catch(error => console.error('Error:', error));
-    }
-
-    function displayFilms(films) {
-      const resultsDiv = document.getElementById('film_results');
-      if (films.length === 0) {
-        resultsDiv.innerHTML = '<div class="alert alert-warning">Geen films gevonden</div>';
-        return;
-      }
-      
-      let html = '<div class="list-group">';
-      films.forEach(film => {
-        const available = film.total_copies - (film.rented_out || 0);
-        if (available > 0) {
-          html += `
-            <button type="button" class="list-group-item list-group-item-action" 
-                    onclick="selectFilm(${film.film_id}, '${film.title}', ${film.rental_rate})">
-              <strong>${film.title}</strong> (${film.release_year})<br>
-              <small class="text-muted">€${film.rental_rate} - ${available} beschikbaar</small>
-            </button>
-          `;
-        }
-      });
-      html += '</div>';
-      resultsDiv.innerHTML = html;
-    }
-
-    function selectFilm(id, title, rate) {
+    // Film selection functions
+    function selectFilmFromCard(id, title, rate) {
       selectedFilm = { id, title, rate };
-      // Voor inventory_id, we nemen gewoon het film_id (in een echte app zou je een beschikbare inventory_id selecteren)
       document.getElementById('inventory_id').value = id; 
       document.getElementById('film_info').textContent = `${title} - €${rate}`;
       document.getElementById('selected_film').classList.remove('d-none');
-      document.getElementById('film_results').innerHTML = '';
+      
+      // Scroll to top to show selection
+      document.querySelector('.card-header.bg-success').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+      
+      checkFormComplete();
+    }
+
+    function clearFilmSelection() {
+      selectedFilm = null;
+      document.getElementById('inventory_id').value = '';
+      document.getElementById('selected_film').classList.add('d-none');
       checkFormComplete();
     }
 
@@ -213,12 +263,16 @@ block content
       const submitBtn = document.getElementById('submit_btn');
       if (selectedCustomer && selectedFilm) {
         submitBtn.disabled = false;
+        submitBtn.classList.remove('btn-secondary');
+        submitBtn.classList.add('btn-success');
       } else {
         submitBtn.disabled = true;
+        submitBtn.classList.remove('btn-success');
+        submitBtn.classList.add('btn-secondary');
       }
     }
 
-    // Enable enter key for search
+    // Enable enter key for customer search
     document.getElementById('customer_search').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -226,9 +280,12 @@ block content
       }
     });
 
-    document.getElementById('film_search').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        searchFilms();
+    // Auto-search for customers as user types
+    document.getElementById('customer_search').addEventListener('input', function() {
+      const query = this.value;
+      if (query.length >= 2) {
+        searchCustomers();
+      } else if (query.length === 0) {
+        document.getElementById('customer_results').innerHTML = '';
       }
     });

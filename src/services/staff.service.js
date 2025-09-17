@@ -12,10 +12,17 @@ const staffService = {
     staffDAO.getActiveRentals(staffId, page, callback);
   },
 
+  // ✅ Fixed parameter order - page first, then callback
   getAvailableFilms: (page, callback) => {
-    logger.info('Getting available films for rental');
-    staffDAO.getAvailableFilms(callback, page);
+    logger.info(`Getting available films for rental - page: ${page}`);
+    staffDAO.getAvailableFilms(page, callback);
   },
+
+  getAvailableFilmsWithFilter: (page, searchQuery, categoryFilter, callback) => {
+    logger.info(`Getting available films with filters - page: ${page}, search: "${searchQuery}", category: "${categoryFilter}"`);
+    staffDAO.getAvailableFilmsWithFilter(page, searchQuery, categoryFilter, callback);
+  },
+
 
   createRental: (customerId, inventoryId, staffId, callback) => {
     logger.info(`Creating rental: customer ${customerId}, inventory ${inventoryId}, staff ${staffId}`);

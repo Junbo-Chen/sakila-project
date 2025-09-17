@@ -52,8 +52,6 @@ block content
                     button.btn.btn-sm.btn-success(onclick=`returnRental(${rental.rental_id})`)
                       i.bi.bi-check-circle.me-1
                       | Retourneer
-
-        // ✅ Pagination toegevoegd
         if totalPages > 1
           nav.mt-3
             ul.pagination.justify-content-center
@@ -77,24 +75,40 @@ block content
 
   script.
     function returnRental(rentalId) {
-      if (confirm('Weet je zeker dat je deze verhuur wilt retourneren?')) {
-        fetch(`/staff/rentals/return/${rentalId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            location.reload();
-          } else {
-            alert('Error: ' + data.error);
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Er is een fout opgetreden');
-        });
-      }
+      if (!rentalId) return Swal.fire('Fout', 'Geen rental id gevonden.', 'error');
+
+      // SweetAlert confirm
+      Swal.fire({
+        title: 'Weet je het zeker?',
+        text: "Wil je deze verhuur retourneren?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Ja, retourneer!',
+        cancelButtonText: 'Nee, annuleren'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Fetch request
+          fetch(`/staff/rentals/${rentalId}/return`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+          })
+          .then(response => response.json().then(json => ({ ok: response.ok, status: response.status, body: json })))
+          .then(({ ok, body }) => {
+            if (ok && body.success) {
+              Swal.fire('Succes!', 'De verhuur is geretourneerd.', 'success')
+                .then(() => location.reload());
+            } else {
+              Swal.fire('Fout', body.error || 'Onbekende fout', 'error');
+            }
+          })
+          .catch(error => {
+            console.error('Fetch error:', error);
+            Swal.fire('Fout', 'Er is een fout opgetreden bij het retourneren.', 'error');
+          });
+        }
+      });
     }
+

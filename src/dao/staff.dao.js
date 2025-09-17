@@ -73,9 +73,26 @@ const staffDAO = {
     });
   },
 
-  getAvailableFilms: (page, callback) => {
-    const limit = 10;
+  getAvailableFilmsWithFilter: (page, searchQuery, categoryFilter, callback) => {
+    const limit = 24;
     const offset = (page - 1) * limit;
+    
+    // Build the WHERE clause dynamically
+    let whereConditions = ['r.rental_id IS NULL'];
+    let queryParams = [];
+    
+    if (searchQuery && searchQuery.trim() !== '') {
+      whereConditions.push('(f.title LIKE ? OR f.description LIKE ?)');
+      const searchPattern = `%${searchQuery.trim()}%`;
+      queryParams.push(searchPattern, searchPattern);
+    }
+    
+    if (categoryFilter && categoryFilter.trim() !== '') {
+      whereConditions.push('LOWER(c.name) = LOWER(?)');
+      queryParams.push(categoryFilter.trim());
+    }
+    
+    const whereClause = whereConditions.join(' AND ');
 
     const query = `
       SELECT 
@@ -92,7 +109,7 @@ const staffDAO = {
       JOIN category c ON fc.category_id = c.category_id
       JOIN inventory i ON f.film_id = i.film_id
       LEFT JOIN rental r ON i.inventory_id = r.inventory_id AND r.return_date IS NULL
-      WHERE r.rental_id IS NULL
+      WHERE ${whereClause}
       GROUP BY f.film_id, f.title, f.description, f.rental_rate, f.length, f.rating
       HAVING available_copies > 0
       ORDER BY f.title
@@ -102,29 +119,57 @@ const staffDAO = {
     const countQuery = `
       SELECT COUNT(DISTINCT f.film_id) as total
       FROM film f
+      JOIN film_category fc ON f.film_id = fc.film_id
+      JOIN category c ON fc.category_id = c.category_id
       JOIN inventory i ON f.film_id = i.film_id
       LEFT JOIN rental r ON i.inventory_id = r.inventory_id AND r.return_date IS NULL
-      WHERE r.rental_id IS NULL
+      WHERE ${whereClause}
+      GROUP BY f.film_id
+      HAVING COUNT(i.inventory_id) - SUM(CASE WHEN r.rental_id IS NOT NULL THEN 1 ELSE 0 END) > 0
     `;
 
-    pool.query(query, [limit, offset], (err, rows) => {
+    // Get categories for the filter dropdown
+    const categoriesQuery = `
+      SELECT DISTINCT c.name 
+      FROM category c 
+      JOIN film_category fc ON c.category_id = fc.category_id 
+      JOIN film f ON fc.film_id = f.film_id 
+      JOIN inventory i ON f.film_id = i.film_id 
+      ORDER BY c.name
+    `;
+
+    // Add pagination parameters
+    queryParams.push(limit, offset);
+
+    pool.query(query, queryParams, (err, rows) => {
       if (err) {
-        console.error('❌ Error in getAvailableFilms:', err);
+        console.error('❌ Error in getAvailableFilmsWithFilter:', err);
         return callback(new Error(`Database error: ${err.message}`));
       }
 
-      pool.query(countQuery, (err2, countRows) => {
+      // Get total count (without LIMIT/OFFSET params)
+      const countParams = queryParams.slice(0, -2);
+      pool.query(countQuery, countParams, (err2, countRows) => {
         if (err2) return callback(err2);
 
-        const total = countRows[0].total;
-        const pages = Math.ceil(total / limit);
+        // Get categories
+        pool.query(categoriesQuery, (err3, categoryRows) => {
+          if (err3) return callback(err3);
 
-        console.log(`✅ Successfully fetched ${rows.length} available films (Page ${page} of ${pages})`);
-        callback(null, { 
-          films: rows,
-          total: total,
-          page,
-          pages: pages
+          const total = countRows.length; // Count of distinct films
+          const pages = Math.ceil(total / limit);
+          const categories = categoryRows.map(row => row.name);
+
+          console.log(`✅ Successfully fetched ${rows.length} filtered films (Page ${page} of ${pages})`);
+          console.log(`   Search: "${searchQuery}", Category: "${categoryFilter}"`);
+          
+          callback(null, { 
+            films: rows,
+            categories: categories,
+            total: total,
+            page,
+            pages: pages
+          });
         });
       });
     });
@@ -247,7 +292,7 @@ const staffDAO = {
       LEFT JOIN city ci ON a.city_id = ci.city_id
       LEFT JOIN country co ON ci.country_id = co.country_id
       LEFT JOIN rental r ON c.customer_id = r.customer_id
-      LEFT JOIN payment p ON r.rental_id = p.rental_idI
+      LEFT JOIN payment p ON r.rental_id = p.rental_id
       WHERE c.customer_id = ?
       GROUP BY c.customer_id
     `;

@@ -14,13 +14,13 @@ router.get('/rentalCreate', staffController.newRentalForm);
 router.post('/rentals/create', staffController.createRental);
 router.post('/rentals/:id/return', staffController.returnRental);
 
-// router.get('/customers', staffController.getCustomers);
-// router.get('/customers/search', staffController.searchCustomers);
-// router.get('/customers/:id', staffController.getCustomerDetails);
+router.get('/customer', staffController.getCustomers);
+router.get('/customers/search', staffController.searchCustomers);
+router.get('/customer/:id', staffController.getCustomerDetails);
+router.get('/films/search', staffController.searchFilms);
 // router.post('/customers/create', staffController.createCustomer);
 
 // router.get('/inventory', staffController.getInventory);
-// router.get('/films/search', staffController.searchFilms);
 
 // router.get('/payments', staffController.getPayments);
 // router.post('/payments/create', staffController.createPayment);

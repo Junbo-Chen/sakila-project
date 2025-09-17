@@ -49,8 +49,10 @@ const staffController = {
   newRentalForm: (req, res) => {
     const staffId = req.session.user.staff_id || 1;
     const page = parseInt(req.query.page) || 1;
+    const searchQuery = req.query.search || '';
+    const categoryFilter = req.query.category || '';
 
-    staffService.getAvailableFilms(page, (err, data) => { // let op: 'data' hier
+    staffService.getAvailableFilmsWithFilter(page, searchQuery, categoryFilter, (err, data) => { 
       if (err) {
         return res.render('error', { 
           title: 'Films Error', 
@@ -61,9 +63,12 @@ const staffController = {
 
       res.render('staff/rentalCreate', {
         title: 'Nieuwe Verhuur',
-        films: data.films,      // array van films
+        films: data.films,
+        categories: data.categories,
         currentPage: data.page,
-        totalPages: data.pages
+        totalPages: data.pages,
+        searchQuery: searchQuery,
+        selectedCategory: categoryFilter
       });
     });
   },

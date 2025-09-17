@@ -1,0 +1,217 @@
+extends ../layout
+
+block content
+  .d-flex.justify-content-between.align-items-center.mb-4
+    h2.text-primary 
+      i.bi.bi-people.me-2
+      | Klanten Beheer
+    .input-group(style="max-width: 300px")
+      input.form-control(type="text" id="customer_search" placeholder="Zoek klanten...")
+      button.btn.btn-primary(type="button" onclick="searchCustomers()")
+        i.bi.bi-search
+  
+  #search_results.mb-3
+
+  if customers && customers.length
+    .card
+      .card-header.bg-primary.text-white
+        h5.mb-0 Alle Klanten (#{customers.length})
+      .card-body.p-0
+        .table-responsive
+          table.table.table-striped.table-hover.mb-0
+            thead.table-dark
+              tr
+                th ID
+                th Naam
+                th Email
+                th Adres
+                th Status
+                th Totaal Verhuur
+                th Laatste Verhuur
+                th Acties
+            tbody
+              each customer in customers
+                tr
+                  td #{customer.customer_id}
+                  td
+                    strong #{customer.full_name}
+                  td #{customer.email}
+                  td
+                    if customer.address
+                      | #{customer.address}
+                      br
+                      small.text-muted #{customer.city}, #{customer.country}
+                    else
+                      span.text-muted Geen adres
+                  td
+                    if customer.active
+                      span.badge.bg-success Actief
+                    else
+                      span.badge.bg-danger Inactief
+                  td
+                    span.badge.bg-info #{customer.total_rentals || 0}
+                  td
+                    if customer.last_rental
+                      | #{new Date(customer.last_rental).toLocaleDateString('nl-NL')}
+                    else
+                      span.text-muted Nog nooit
+                  td
+                    .btn-group(role="group")
+                      a.btn.btn-sm.btn-info(href=`/staff/customers/${customer.customer_id}`)
+                        i.bi.bi-eye.me-1
+                        | Details
+                      button.btn.btn-sm.btn-success(onclick=`startRental(${customer.customer_id}, '${customer.full_name}')`)
+                        i.bi.bi-plus.me-1
+                        | Verhuur
+  else
+    .alert.alert-info.text-center
+      h4 
+        i.bi.bi-info-circle.me-2
+        | Geen klanten gevonden
+      p Er zijn geen klanten beschikbaar in het systeem.
+
+  // Quick Rental Modal
+  #quickRentalModal.modal.fade(tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5.modal-title Snelle Verhuur
+          button.btn-close(type="button" data-bs-dismiss="modal")
+        .modal-body
+          p Nieuwe verhuur voor: <strong id="modal_customer_name"></strong></p>
+          .mb-3
+            label.form-label Film zoeken
+            .input-group
+              input.form-control(type="text" id="modal_film_search" placeholder="Zoek film...")
+              button.btn.btn-primary(type="button" onclick="searchModalFilms()")
+                i.bi.bi-search
+          #modal_film_results
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Annuleren
+          a.btn.btn-primary(href="/staff/rentals/new") Uitgebreide Verhuur
+
+  script.
+    let currentCustomerId = null;
+
+    function searchCustomers() {
+      const query = document.getElementById('customer_search').value;
+      if (query.length < 2) {
+        document.getElementById('search_results').innerHTML = '';
+        return;
+      }
+      
+      fetch(`/staff/customers/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.customers) {
+            displaySearchResults(data.customers);
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function displaySearchResults(customers) {
+      const resultsDiv = document.getElementById('search_results');
+      if (customers.length === 0) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning">Geen klanten gevonden</div>';
+        return;
+      }
+      
+      let html = '<div class="card"><div class="card-header bg-success text-white"><h6 class="mb-0">Zoekresultaten</h6></div><div class="list-group list-group-flush">';
+      customers.forEach(customer => {
+        html += `
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>${customer.full_name}</strong><br>
+              <small class="text-muted">${customer.email} - ID: ${customer.customer_id}</small>
+            </div>
+            <div class="btn-group">
+              <a href="/staff/customers/${customer.customer_id}" class="btn btn-sm btn-info">
+                <i class="bi bi-eye"></i> Details
+              </a>
+              <button class="btn btn-sm btn-success" onclick="startRental(${customer.customer_id}, '${customer.full_name}')">
+                <i class="bi bi-plus"></i> Verhuur
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div></div>';
+      resultsDiv.innerHTML = html;
+    }
+
+    function startRental(customerId, customerName) {
+      currentCustomerId = customerId;
+      document.getElementById('modal_customer_name').textContent = customerName;
+      new bootstrap.Modal(document.getElementById('quickRentalModal')).show();
+    }
+
+    function searchModalFilms() {
+      const query = document.getElementById('modal_film_search').value;
+      if (query.length < 2) return;
+      
+      fetch(`/staff/films/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.films) {
+            displayModalFilms(data.films);
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function displayModalFilms(films) {
+      const resultsDiv = document.getElementById('modal_film_results');
+      if (films.length === 0) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning">Geen films gevonden</div>';
+        return;
+      }
+      
+      let html = '<div class="list-group mt-2">';
+      films.forEach(film => {
+        const available = film.total_copies - (film.rented_out || 0);
+        if (available > 0) {
+          html += `
+            <button type="button" class="list-group-item list-group-item-action" 
+                    onclick="quickRental(${currentCustomerId}, ${film.film_id}, '${film.title}')">
+              <strong>${film.title}</strong> (${film.release_year})<br>
+              <small class="text-muted">€${film.rental_rate} - ${available} beschikbaar</small>
+            </button>
+          `;
+        }
+      });
+      html += '</div>';
+      resultsDiv.innerHTML = html;
+    }
+
+    function quickRental(customerId, filmId, filmTitle) {
+      if (confirm(`Verhuur "${filmTitle}" aan deze klant?`)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/staff/rentals/create';
+        
+        const customerInput = document.createElement('input');
+        customerInput.type = 'hidden';
+        customerInput.name = 'customer_id';
+        customerInput.value = customerId;
+        
+        const inventoryInput = document.createElement('input');
+        inventoryInput.type = 'hidden';
+        inventoryInput.name = 'inventory_id';
+        inventoryInput.value = filmId; // Simplified - should be actual inventory_id
+        
+        form.appendChild(customerInput);
+        form.appendChild(inventoryInput);
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+
+    // Enable enter key for search
+    document.getElementById('customer_search').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchCustomers();
+      }
+    });

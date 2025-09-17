@@ -46,7 +46,7 @@ const authController = {
           res.redirect('/staff/dashboard');
           break;
         case 'customer':
-          res.redirect('/customer/dashboard');
+          res.redirect('/customer');
           break;
         default:
           res.redirect('/');
