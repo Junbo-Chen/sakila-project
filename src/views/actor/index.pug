@@ -2,7 +2,7 @@ extends ../layout
 
 block content
   .d-flex.justify-content-between.align-items-center.mb-4
-    h2.text-primary 🎭 Actors
+    h2.text-primary Actors
     a.btn.btn-success(href="#addActorModal" data-bs-toggle="modal") 
       | ➕ Nieuwe Actor
   
@@ -28,17 +28,16 @@ block content
                   .btn-group(role="group")
                     button.btn.btn-sm.btn-warning.me-1(
                       onclick=`editActor(${actor.actor_id}, '${actor.first_name}', '${actor.last_name}')`
-                    ) ✏️ Edit
+                    ) Edit
                     form.d-inline(method="POST" action=`/actor/delete/${actor.actor_id}` 
                                    onsubmit="return confirm('Weet je zeker dat je deze actor wilt verwijderen?')")
-                      button.btn.btn-sm.btn-danger(type="submit") 🗑️ Delete
+                      button.btn.btn-sm.btn-danger(type="submit")  Delete
   else
     .alert.alert-info.text-center
       h4 😔 Geen actors gevonden
       p Er zijn nog geen actors in de database.
       a.btn.btn-primary(href="#addActorModal" data-bs-toggle="modal") Voeg de eerste actor toe
 
-  // Add Actor Modal
   #addActorModal.modal.fade(tabindex="-1")
     .modal-dialog
       .modal-content

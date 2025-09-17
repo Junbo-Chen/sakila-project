@@ -1,0 +1,114 @@
+extends ../layout
+
+block content
+  .row.mb-4
+    .col-12
+      h1.text-primary
+        i.bi.bi-speedometer2.me-2
+        | Staff Dashboard
+      p.lead Welkom terug! Hier is een overzicht van uw activiteiten.
+
+  // Dashboard Stats
+  .row.g-4.mb-4
+    .col-lg-3.col-md-6
+      .card.bg-primary.text-white
+        .card-body
+          .d-flex.justify-content-between
+            div
+              h6.card-title Actieve Verhuur
+              h2.mb-0 #{dashboardData.active_rentals || 0}
+            .align-self-center
+              i.bi.bi-film.display-4.opacity-75
+    
+    .col-lg-3.col-md-6
+      .card.bg-success.text-white
+        .card-body
+          .d-flex.justify-content-between
+            div
+              h6.card-title Vandaag Verhuurd
+              h2.mb-0 #{dashboardData.todays_rentals || 0}
+            .align-self-center
+              i.bi.bi-calendar-check.display-4.opacity-75
+    
+    .col-lg-3.col-md-6
+      .card.bg-info.text-white
+        .card-body
+          .d-flex.justify-content-between
+            div
+              h6.card-title Omzet Vandaag
+              h2.mb-0 €#{(dashboardData.todays_revenue || 0).toFixed(2)}
+            .align-self-center
+              i.bi.bi-cash.display-4.opacity-75
+    
+    .col-lg-3.col-md-6
+      .card.bg-warning.text-white
+        .card-body
+          .d-flex.justify-content-between
+            div
+              h6.card-title Totaal Klanten
+              h2.mb-0 #{dashboardData.total_customers || 0}
+            .align-self-center
+              i.bi.bi-people.display-4.opacity-75
+
+  // Quick Actions
+  .row.mb-4
+    .col-12
+      .card
+        .card-header.bg-primary.text-white
+          h5.mb-0
+            i.bi.bi-lightning.me-2
+            | Snelle Acties
+        .card-body
+          .row.g-3
+            .col-md-3
+              a.btn.btn-success.w-100.py-3(href="/staff/rentalCreate")
+                i.bi.bi-plus-circle.me-2
+                | Nieuwe Verhuur
+            .col-md-3
+              a.btn.btn-primary.w-100.py-3(href="/staff/rentals")
+                i.bi.bi-list.me-2
+                | Actieve Verhuur
+            .col-md-3
+              a.btn.btn-info.w-100.py-3(href="/staff/customers")
+                i.bi.bi-people.me-2
+                | Klanten Beheer
+            .col-md-3
+              a.btn.btn-secondary.w-100.py-3(href="/staff/inventory")
+                i.bi.bi-box.me-2
+                | Film Inventory
+
+  // Recent Activity
+  .row
+    .col-lg-8
+      .card
+        .card-header.bg-secondary.text-white
+          h5.mb-0
+            i.bi.bi-clock-history.me-2
+            | Recente Activiteiten
+        .card-body
+          p.text-muted Hier worden binnenkort uw recente activiteiten getoond.
+          .d-flex.justify-content-center.py-4
+            .text-muted
+              i.bi.bi-hourglass-split.me-2
+              | Activiteiten laden...
+    
+    .col-lg-4
+      .card
+        .card-header.bg-dark.text-white
+          h5.mb-0
+            i.bi.bi-info-circle.me-2
+            | Systeeminformatie
+        .card-body
+          .list-group.list-group-flush
+            .list-group-item.d-flex.justify-content-between
+              span Status
+              span.badge.bg-success Online
+            .list-group-item.d-flex.justify-content-between
+              span Database
+              span.badge.bg-primary MySQL
+            .list-group-item.d-flex.justify-content-between
+              span Versie
+              span.badge.bg-secondary v1.0
+            .list-group-item.d-flex.justify-content-between
+              span Store ID
+              span.badge.bg-info #{user.store_id || 1}

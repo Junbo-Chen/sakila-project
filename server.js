@@ -4,8 +4,15 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+// Bestaande routes
 var indexRouter = require('./src/routes/index');
-var usersRouter = require('./src/routes/actor');
+var actorRouter = require('./src/routes/actor');
+
+// Nieuwe viewpoint routes
+var staffRouter = require('./src/routes/staff');
+// var customerRouter = require('./src/routes/customer');
+// var adminRouter = require('./src/routes/admin');
+var authRouter = require('./src/routes/auth');
 
 var app = express();
 
@@ -19,8 +26,27 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
+const session = require('express-session');
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'sakila-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 24 * 60 * 60 * 1000 } 
+}));
+
+// Global variables voor views
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
+  res.locals.userRole = req.session.userRole || null;
+  next();
+});
+
+// Routes
 app.use('/', indexRouter);
-app.use('/actor', usersRouter);
+app.use('/actor', actorRouter);
+app.use('/auth', authRouter);
+app.use('/staff', staffRouter);
+// app.use('/customer', customerRouter);
 
 // catch 404
 app.use(function(req, res, next) {

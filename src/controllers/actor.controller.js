@@ -1,26 +1,22 @@
 
-const { getById } = require("../dao/actor.dao");
 const actorService = require("../services/actor.service");
+const logger = require("../util/logger");
+const { expect } = require("chai");
 
 const actorController = {
-  validate: (req, res, next) => {
+   validate: (req, res, next) => {
     const { firstName, lastName } = req.body;
-    const errors = [];
-    if (!firstName || firstName.trim() === "") {
-      errors.push("First name is required");
-    }
-    if (!lastName || lastName.trim() === "") {
-      errors.push("Last name is required");
-    }
-    if (errors.length > 0) {
-      return res.status(400).render("actor/form", {
-        errors,
-        actor: { firstName, lastName },
-        title: "Actor Form"
-      });
-    }
-    next();
+    const userId = req.params.id; // alleen gebruiken als je nodig hebt
+
+    actorService.validate(firstName, lastName, (error) => {
+      if (error) {
+        logger.error(`Validation error: ${error.message}`);
+        return res.status(400).json({ error: error.message });
+      }
+      next(); // belangrijk, anders komt request nooit verder
+    });
   },
+    
   getAll: (req, res, next) => {
     actorService.getAll((err, actors) => {
       if (err) {

@@ -12,25 +12,26 @@ block content
             | Beheer je filmdatabase met deze moderne MVC applicatie. 
             | Bekijk, bewerk en voeg actors toe aan je Sakila database.
           
-          .row.g-4.mt-3
-            .col-md-6
-              .card.bg-primary.text-white.h-100
-                .card-body.text-center
-                  i.bi.bi-people-fill.display-1.mb-3
-                  h4 Actors
-                  p.mb-3 Bekijk en beheer alle actors in de database
-                  a.btn.btn-light.btn-lg(href="/actor") 
-                    | 🎭 Bekijk Actors
-                    i.bi.bi-arrow-right.ms-2
+          .row.g-4.mt-2
+            //- .col-md-6
+            //-   .card.bg-primary.text-white.h-100
+            //-     .card-body.text-center
+            //-       i.bi.bi-people-fill.display-1.mb-3
+            //-       h4 Actors
+            //-       p.mb-3 Bekijk en beheer alle actors in de database
+            //-       a.btn.btn-light.btn-lg(href="/actor") 
+            //-         | 🎭 Bekijk Actors
+            //-         i.bi.bi-arrow-right.ms-2
             
-            .col-md-6
-              .card.bg-secondary.text-white.h-100
+            .d-flex.justify-content-center.mt-4
+              .card.bg-secondary.text-white.w-50
                 .card-body.text-center
-                  i.bi.bi-gear-fill.display-1.mb-3
-                  h4 Coming Soon
-                  p.mb-3 Meer functies komen binnenkort beschikbaar
-                  button.btn.btn-light.btn-lg(disabled) 
-                    | 🔧 Binnenkort
+                  a.nav-link(href="/auth/login")
+                    i.bi.bi-person-fill.display-1.mb-3i
+
+                    p.mb-3 
+                    button.btn.btn-light.btn-lg
+                      | Login
           
           .row.mt-5
             .col-12

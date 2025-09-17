@@ -1,0 +1,29 @@
+extends ../layout
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-6
+        .card.shadow-lg.rounded
+          .card-header.bg-primary.text-white.text-center
+            h3.mb-0 🔑 Login
+          .card-body
+            if error
+              .alert.alert-danger #{error}
+            
+            form(action="/auth/login" method="POST")
+              .mb-3
+                label.form-label(for="email") Email
+                input.form-control(type="email" name="email" id="email" required placeholder="jouw@email.com")
+              
+              .mb-3
+                label.form-label(for="password") Wachtwoord
+                input.form-control(type="password" name="password" id="password" required placeholder="Je wachtwoord")
+
+              .mb-3
+                label.form-label(for="role") Rol
+                select.form-select(name="role" id="role" required)
+                  option(value="customer") Customer
+                  option(value="staff") Staff
+
+              button.btn.btn-success.w-100(type="submit") Inloggen
