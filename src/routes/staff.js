@@ -22,20 +22,5 @@ router.get('/customers/search', staffController.searchCustomers);
 router.get('/customer/:id', staffController.getCustomerDetails);
 router.post('/customers/create', staffController.createCustomer);
 
-// Inventory Management
-router.get('/inventory', staffController.getInventory);
-router.get('/inventory/search', staffController.searchInventory);
-router.post('/inventory/add', staffController.addInventory);
-
-router.get('/films/search', staffController.searchFilms);
-
-router.post('/films/add', staffController.addFilm);
-router.post('/films/:id/add-copy', staffController.addFilmCopy);
-router.post('/films/:id/remove-copy', staffController.removeFilmCopy);
-router.put('/films/:id', staffController.updateFilm);
-
-// Bulk operations for inventory
-router.post('/inventory/bulk-add-copies', staffController.bulkAddCopies);
-router.post('/inventory/bulk-update-rates', staffController.bulkUpdateRates);
 
 module.exports = router;

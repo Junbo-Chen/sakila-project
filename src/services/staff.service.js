@@ -64,11 +64,6 @@ const staffService = {
     staffDAO.getCustomerDetails(customerId, callback);
   },
 
-  getInventory: (callback) => {
-    logger.info('Getting inventory overview');
-    staffDAO.getInventory(callback);
-  },
-
   searchFilms: (searchTerm, callback) => {
     logger.info(`Searching films with term: ${searchTerm}`);
     if (!searchTerm || searchTerm.trim() === '') {
@@ -82,86 +77,7 @@ const staffService = {
     staffDAO.getRecentPayments(staffId, callback);
   },
 
-  // New inventory management services
-  addFilm: (filmData, staffId, callback) => {
-    logger.info(`Adding new film: ${filmData.title} by staff ${staffId}`);
-    
-    // Validate required fields
-    if (!filmData.title || !filmData.rental_rate) {
-      return callback(new Error('Titel en verhuur tarief zijn verplicht'));
-    }
-    
-    // Ensure positive rental rate
-    if (parseFloat(filmData.rental_rate) <= 0) {
-      return callback(new Error('Verhuur tarief moet positief zijn'));
-    }
-    
-    staffDAO.addFilm(filmData, callback);
-  },
 
-  addFilmCopy: (filmId, copies, staffId, callback) => {
-    logger.info(`Adding ${copies} copies to film ID: ${filmId} by staff ${staffId}`);
-    
-    if (!filmId || copies <= 0) {
-      return callback(new Error('Ongeldig film ID of aantal kopiëen'));
-    }
-    
-    staffDAO.addFilmCopy(filmId, copies, callback);
-  },
 
-  removeFilmCopy: (filmId, copies, staffId, callback) => {
-    logger.info(`Removing ${copies} copies from film ID: ${filmId} by staff ${staffId}`);
-    
-    if (!filmId || copies <= 0) {
-      return callback(new Error('Ongeldig film ID of aantal kopiëen'));
-    }
-    
-    // Check if we can safely remove copies (ensure at least 1 remains available)
-    staffDAO.getFilmAvailability(filmId, (err, availability) => {
-      if (err) return callback(err);
-      
-      const availableCopies = availability.total_copies - availability.rented_out;
-      if (availableCopies <= copies) {
-        return callback(new Error('Kan niet alle kopiëen verwijderen - er moet minimaal 1 kopie beschikbaar blijven'));
-      }
-      
-      staffDAO.removeFilmCopy(filmId, copies, callback);
-    });
-  },
-
-  updateFilm: (filmId, filmData, staffId, callback) => {
-    logger.info(`Updating film ID: ${filmId} by staff ${staffId}`);
-    
-    if (!filmId) {
-      return callback(new Error('Film ID is verplicht'));
-    }
-    
-    // Validate rental rate if provided
-    if (filmData.rental_rate && parseFloat(filmData.rental_rate) <= 0) {
-      return callback(new Error('Verhuur tarief moet positief zijn'));
-    }
-    
-    staffDAO.updateFilm(filmId, filmData, callback);
-  },
-
-  bulkAddCopies: (filmIds, copies, staffId, callback) => {
-    logger.info(`Bulk adding ${copies} copies to ${filmIds.length} films by staff ${staffId}`);
-    
-    if (!filmIds || filmIds.length === 0 || copies <= 0) {
-      return callback(new Error('Ongeldige film selectie of aantal kopiëen'));
-    }
-    
-    staffDAO.bulkAddCopies(filmIds, copies, callback);
-  },
-
-  bulkUpdateRates: (filmIds, newRate, staffId, callback) => {
-    logger.info(`Bulk updating rates to €${newRate} for ${filmIds.length} films by staff ${staffId}`);
-    
-    if (!filmIds || filmIds.length === 0 || parseFloat(newRate) <= 0) {
-      return callback(new Error('Ongeldige film selectie of tarief'));
-    }
-    
-    staffDAO.bulkUpdateRates(filmIds, newRate, callback);
-  },
 };
 module.exports = staffService;

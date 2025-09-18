@@ -357,37 +357,6 @@ const staffDAO = {
     });
   },
 
-    getInventory: (callback) => {
-      const query = `
-        SELECT 
-          f.film_id,
-          f.title,
-          f.description,
-          f.release_year,
-          f.rental_rate,
-          f.length,
-          f.rating,
-          COUNT(i.inventory_id) as total_copies,
-          SUM(CASE WHEN r.return_date IS NULL THEN 1 ELSE 0 END) as rented_out
-        FROM film f
-        JOIN inventory i ON f.film_id = i.film_id
-        LEFT JOIN rental r ON i.inventory_id = r.inventory_id AND r.return_date IS NULL
-        WHERE i.store_id = 1
-        GROUP BY f.film_id
-        ORDER BY f.title
-        LIMIT 100
-      `;
-      
-      pool.query(query, (err, rows) => {
-        if (err) {
-          console.error('❌ Error in getInventory:', err);
-          return callback(new Error(`Database error: ${err.message}`));
-        }
-        callback(null, rows);
-      });
-    },
-
-
   searchFilms: (searchTerm, callback) => {
     const query = `
       SELECT 
@@ -420,32 +389,6 @@ const staffDAO = {
     });
   },
 
-  getRecentPayments: (staffId, callback) => {
-    const query = `
-      SELECT 
-        p.payment_id,
-        p.amount,
-        p.payment_date,
-        CONCAT(c.first_name, ' ', c.last_name) as customer_name,
-        f.title as film_title
-      FROM payment p
-      JOIN customer c ON p.customer_id = c.customer_id
-      JOIN rental r ON p.rental_id = r.rental_id
-      JOIN inventory i ON r.inventory_id = i.inventory_id
-      JOIN film f ON i.film_id = f.film_id
-      WHERE p.staff_id = ?
-      ORDER BY p.payment_date DESC
-      LIMIT 50
-    `;
-    
-    pool.query(query, [staffId], (err, rows) => {
-      if (err) {
-        console.error('❌ Error in getRecentPayments:', err);
-        return callback(new Error(`Database error: ${err.message}`));
-      }
-      callback(null, rows);
-    });
-  }
 };
 
 module.exports = staffDAO;
