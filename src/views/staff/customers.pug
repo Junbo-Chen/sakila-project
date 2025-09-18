@@ -63,13 +63,15 @@ block content
                     .btn-group(role="group")
                       a.btn.btn-sm.btn-info(href="javascript:void(0)" onclick=`showCustomerDetails(${customer.customer_id})`)
                         i.bi.bi-eye.me-1
-                        | Details
+                      a.btn.btn-sm.btn-warning(href=`/staff/customer/${customer.customer_id}/edit`)
+                        i.bi.bi-pencil.me-1
   else
     .alert.alert-info.text-center
       h4 
         i.bi.bi-info-circle.me-2
         | Geen klanten gevonden
       p Er zijn geen klanten beschikbaar in het systeem.
+  
   #customerDetailsModal.modal.fade(tabindex="-1")
     .modal-dialog.modal-lg
       .modal-content
@@ -117,8 +119,6 @@ block content
             button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Annuleren
             button.btn.btn-primary(type="submit") Opslaan
 
-
-
   script.
     let currentCustomerId = null;
     function showCustomerDetails(customerId) {
@@ -133,6 +133,11 @@ block content
               <p><strong>Status:</strong> ${customer.active ? 'Actief' : 'Inactief'}</p>
               <p><strong>Totaal Verhuur:</strong> ${customer.total_rentals || 0}</p>
               <p><strong>Laatst Verhuur:</strong> ${customer.last_rental_date ? new Date(customer.last_rental_date).toLocaleDateString('nl-NL') : 'Nog nooit'}</p>
+              <div class="mt-3">
+                <a href="/staff/customer/${customer.customer_id}/edit" class="btn btn-warning btn-sm">
+                  <i class="bi bi-pencil me-1"></i> Bewerken
+                </a>
+              </div>
             `;
             document.getElementById('customerDetailsContent').innerHTML = html;
 
@@ -188,6 +193,9 @@ block content
                 onclick="showCustomerDetails(${customer.customer_id})">
                 <i class="bi bi-eye me-1"></i> Details
               </button>
+              <a href="/staff/customer/${customer.customer_id}/edit" class="btn btn-sm btn-warning">
+                <i class="bi bi-pencil me-1"></i> Bewerken
+              </a>
             </div>
           </div>
         `;

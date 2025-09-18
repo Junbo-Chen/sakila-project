@@ -1,0 +1,170 @@
+extends ../layout
+
+block content
+  .d-flex.justify-content-between.align-items-center.mb-4
+    h2.text-primary 
+      i.bi.bi-person-gear.me-2
+      | Klant Bewerken
+    a.btn.btn-secondary(href="/staff/customers")
+      i.bi.bi-arrow-left.me-1
+      | Terug naar Klanten
+
+  if error
+    .alert.alert-danger
+      i.bi.bi-exclamation-triangle.me-2
+      | #{error}
+
+  if customer
+    .card
+      .card-header.bg-primary.text-white
+        h5.mb-0 
+          i.bi.bi-person.me-2
+          | #{customer.first_name} #{customer.last_name}
+      .card-body
+        form(method="POST" action=`/staff/customer/${customer.customer_id}/edit`)
+          .row
+            .col-md-6
+              .mb-3
+                label.form-label(for="first_name") Voornaam *
+                input.form-control(
+                  type="text" 
+                  name="first_name" 
+                  id="first_name" 
+                  value=customer.first_name 
+                  required
+                )
+              
+              .mb-3
+                label.form-label(for="last_name") Achternaam *
+                input.form-control(
+                  type="text" 
+                  name="last_name" 
+                  id="last_name" 
+                  value=customer.last_name 
+                  required
+                )
+              
+              .mb-3
+                label.form-label(for="email") Email *
+                input.form-control(
+                  type="email" 
+                  name="email" 
+                  id="email" 
+                  value=customer.email 
+                  required
+                )
+              
+              .mb-3
+                .form-check
+                  input.form-check-input(
+                    type="checkbox" 
+                    name="active" 
+                    id="active" 
+                    checked=customer.active
+                  )
+                  label.form-check-label(for="active") Actieve Klant
+
+            .col-md-6
+              .mb-3
+                label.form-label(for="address") Adres
+                input.form-control(
+                  type="text" 
+                  name="address" 
+                  id="address" 
+                  value=customer.address || ''
+                )
+              
+              .mb-3
+                label.form-label(for="city") Stad
+                input.form-control(
+                  type="text" 
+                  name="city" 
+                  id="city" 
+                  value=customer.city || ''
+                )
+              
+              .mb-3
+                label.form-label(for="country") Land
+                input.form-control(
+                  type="text" 
+                  name="country" 
+                  id="country" 
+                  value=customer.country || ''
+                )
+              
+              .mb-3
+                label.form-label Klant Statistieken
+                .small.text-muted
+                  p.mb-1
+                    strong Klant ID: 
+                    | #{customer.customer_id}
+                  p.mb-1
+                    strong Totaal Verhuur: 
+                    | #{customer.total_rentals || 0}
+                  p.mb-1
+                    strong Laatste Verhuur: 
+                    | #{customer.last_rental_date ? new Date(customer.last_rental_date).toLocaleDateString('nl-NL') : 'Nog nooit'}
+                  p.mb-0
+                    strong Account Aangemaakt: 
+                    | #{customer.create_date ? new Date(customer.create_date).toLocaleDateString('nl-NL') : 'Onbekend'}
+
+          .row.mt-4
+            .col-12
+              .d-flex.justify-content-between
+                div
+                  button.btn.btn-success(type="submit")
+                    i.bi.bi-check-circle.me-1
+                    | Wijzigingen Opslaan
+                  
+                  a.btn.btn-outline-secondary.ms-2(href="/staff/customers")
+                    i.bi.bi-x-circle.me-1
+                    | Annuleren
+                
+                div
+                  button.btn.btn-danger(
+                    type="button" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#deleteCustomerModal"
+                  )
+                    i.bi.bi-trash.me-1
+                    | Verwijderen
+
+    // Delete Confirmation Modal
+    #deleteCustomerModal.modal.fade(tabindex="-1")
+      .modal-dialog
+        .modal-content
+          .modal-header.bg-danger.text-white
+            h5.modal-title Klant Verwijderen
+            button.btn-close.btn-close-white(type="button" data-bs-dismiss="modal")
+          .modal-body
+            p 
+              strong Weet je zeker dat je deze klant wilt verwijderen?
+            p.text-danger
+              i.bi.bi-exclamation-triangle.me-2
+              | Deze actie kan niet ongedaan worden gemaakt.
+            .bg-light.p-3.rounded
+              p.mb-1
+                strong Naam: 
+                | #{customer.first_name} #{customer.last_name}
+              p.mb-1
+                strong Email: 
+                | #{customer.email}
+              p.mb-0
+                strong Totaal Verhuur: 
+                | #{customer.total_rentals || 0}
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Annuleren
+            form(method="POST" action=`/staff/customer/${customer.customer_id}/delete` style="display: inline;")
+              button.btn.btn-danger(type="submit")
+                i.bi.bi-trash.me-1
+                | Definitief Verwijderen
+
+  else
+    .alert.alert-warning.text-center
+      h4 
+        i.bi.bi-exclamation-triangle.me-2
+        | Klant niet gevonden
+      p Deze klant bestaat niet of kon niet worden geladen.
+      a.btn.btn-primary(href="/staff/customers")
+        i.bi.bi-arrow-left.me-1
+        | Terug naar Klanten

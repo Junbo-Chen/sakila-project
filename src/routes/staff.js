@@ -21,6 +21,8 @@ router.get('/customers', staffController.getCustomers);
 router.get('/customers/search', staffController.searchCustomers);
 router.get('/customer/:id', staffController.getCustomerDetails);
 router.post('/customers/create', staffController.createCustomer);
+router.get('/customer/:id/edit', staffController.getCustomerEditForm);
+router.post('/customer/:id/edit', staffController.updateCustomer);
 
 
 module.exports = router;

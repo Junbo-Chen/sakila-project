@@ -76,6 +76,17 @@ const staffService = {
     logger.info(`Getting recent payments for staff ID: ${staffId}`);
     staffDAO.getRecentPayments(staffId, callback);
   },
+  updateCustomer: (customerId, customerData, callback) => {
+    staffDAO.updateCustomer(customerId, customerData, (err, result) => {
+      if (err) {
+        logger.error(`Service error updating customer ${customerId}: ${err.message}`);
+        return callback(err);
+      }
+      
+      logger.info(`Successfully updated customer ${customerId}`);
+      callback(null, result);
+    });
+  }
 
 
 

@@ -215,7 +215,64 @@ const staffController = {
         }
       );
     });
-  }
+  },
+  getCustomerEditForm: (req, res) => {
+    const customerId = req.params.id;
+    
+    staffService.getCustomerDetails(customerId, (err, customer) => {
+      if (err) {
+        return res.render('error', { 
+          title: 'Customer Error', 
+          message: err.message,
+          error: err 
+        });
+      }
+      
+      res.render('staff/customerEdit', {
+        title: 'Klant Bewerken',
+        customer: customer
+      });
+    });
+  },
+
+  updateCustomer: (req, res) => {
+    const customerId = req.params.id;
+    const { first_name, last_name, email, address, city, country, active } = req.body;
+
+    const customerData = {
+      first_name,
+      last_name,
+      email,
+      address,
+      city,
+      country,
+      active: active === 'on' || active === '1' ? 1 : 0
+    };
+
+    staffService.updateCustomer(customerId, customerData, (err, result) => {
+      if (err) {
+        logger.error(`Update customer error: ${err.message}`);
+        return staffService.getCustomerDetails(customerId, (getErr, customer) => {
+          if (getErr) {
+            return res.render('error', { 
+              title: 'Customer Error', 
+              message: getErr.message,
+              error: getErr 
+            });
+          }
+          
+          res.render('staff/customerEdit', {
+            title: 'Klant Bewerken',
+            customer: customer,
+            error: err.message
+          });
+        });
+      }
+      
+      res.redirect('/staff/customers');
+    });
+  },
+
 };
 
 module.exports = staffController;

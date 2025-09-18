@@ -388,6 +388,111 @@ const staffDAO = {
       callback(null, rows);
     });
   },
+  updateCustomer: (customerId, customerData, callback) => {
+    // First, get the current customer to get their address_id
+    const getCustomerQuery = `
+      SELECT c.*, a.address_id 
+      FROM customer c 
+      LEFT JOIN address a ON c.address_id = a.address_id 
+      WHERE c.customer_id = ?
+    `;
+    
+    pool.query(getCustomerQuery, [customerId], (err, customerRows) => {
+      if (err) {
+        console.error('❌ Error in updateCustomer (get customer):', err);
+        return callback(new Error(`Database error: ${err.message}`));
+      }
+      
+      if (customerRows.length === 0) {
+        return callback(new Error('Klant niet gevonden'));
+      }
+      
+      const currentCustomer = customerRows[0];
+      const addressId = currentCustomer.address_id;
+      
+      // Update address if address_id exists
+      if (addressId && (customerData.address || customerData.city || customerData.country)) {
+        const updateAddressQuery = `
+          UPDATE address 
+          SET address = ?, 
+              last_update = NOW()
+          WHERE address_id = ?
+        `;
+        
+        pool.query(updateAddressQuery, [
+          customerData.address || currentCustomer.address,
+          addressId
+        ], (err) => {
+          if (err) {
+            console.error('❌ Error in updateCustomer (address):', err);
+            return callback(new Error(`Database error (address): ${err.message}`));
+          }
+          
+          updateCustomerRecord();
+        });
+      } else if (!addressId && customerData.address) {
+        // Create new address if customer doesn't have one but address is provided
+        const createAddressQuery = `
+          INSERT INTO address 
+          (address, address2, district, city_id, postal_code, phone, location, last_update)
+          VALUES (?, '', 'Unknown', 1, '', '', ST_GeomFromText('POINT(0 0)'), NOW())
+        `;
+        
+        pool.query(createAddressQuery, [customerData.address], (err, result) => {
+          if (err) {
+            console.error('❌ Error in updateCustomer (create address):', err);
+            return callback(new Error(`Database error (create address): ${err.message}`));
+          }
+          
+          const newAddressId = result.insertId;
+          updateCustomerRecord(newAddressId);
+        });
+      } else {
+        updateCustomerRecord();
+      }
+      
+      function updateCustomerRecord(newAddressId = null) {
+        // Update customer record
+        const updateCustomerQuery = `
+          UPDATE customer 
+          SET first_name = ?, 
+              last_name = ?, 
+              email = ?, 
+              active = ?,
+              ${newAddressId ? 'address_id = ?,' : ''} 
+              last_update = NOW()
+          WHERE customer_id = ?
+        `;
+        
+        const queryParams = [
+          customerData.first_name,
+          customerData.last_name,
+          customerData.email,
+          customerData.active
+        ];
+        
+        if (newAddressId) {
+          queryParams.push(newAddressId);
+        }
+        
+        queryParams.push(customerId);
+        
+        pool.query(updateCustomerQuery, queryParams, (err, result) => {
+          if (err) {
+            console.error('❌ Error in updateCustomer (customer):', err);
+            return callback(new Error(`Database error (customer): ${err.message}`));
+          }
+          
+          if (result.affectedRows === 0) {
+            return callback(new Error('Klant niet gevonden of geen wijzigingen'));
+          }
+          
+          console.log(`✅ Successfully updated customer ID: ${customerId}`);
+          callback(null, { customer_id: customerId });
+        });
+      }
+    });
+  }
 
 };
 
