@@ -1,5 +1,6 @@
 const pool = require('../db/sql/connection');
 const staff = require('../models/staff');
+const { create } = require('./actor.dao');
 
 const staffDAO = {
   getDashboardStats: (staffId, callback) => {
@@ -312,34 +313,80 @@ const staffDAO = {
     });
   },
 
-    getInventory: (callback) => {
-    const query = `
-      SELECT 
-        f.film_id,
-        f.title,
-        f.description,
-        f.release_year,
-        f.rental_rate,
-        f.length,
-        f.rating,
-        COUNT(i.inventory_id) as total_copies,
-        SUM(CASE WHEN r.return_date IS NULL THEN 1 ELSE 0 END) as rented_out
-      FROM film f
-      JOIN inventory i ON f.film_id = i.film_id
-      LEFT JOIN rental r ON i.inventory_id = r.inventory_id AND r.return_date IS NULL
-      GROUP BY f.film_id
-      ORDER BY f.title
-      LIMIT 100
+  createCustomer: (customerData, callback) => {
+    const addressQuery = `
+      INSERT INTO address 
+      (address, address2, district, city_id, postal_code, phone, location, last_update)
+      VALUES (?, ?, ?, ?, ?, ?, ST_GeomFromText(?), NOW())
     `;
-    
-    pool.query(query, (err, rows) => {
+
+    const location = customerData.location || 'POINT(0 0)'; 
+    pool.query(addressQuery, [
+      customerData.address,
+      customerData.address2 || '',
+      customerData.district || 'Unknown',
+      customerData.city_id || 1, 
+      customerData.postal_code || '',
+      customerData.phone || '',
+      location
+    ], (err, addressResult) => {
       if (err) {
-        console.error('❌ Error in getInventory:', err);
-        return callback(new Error(`Database error: ${err.message}`));
+        console.error('❌ Error in createCustomer (address):', err);
+        return callback(new Error(`Database error (address): ${err.message}`));
       }
-      callback(null, rows);
+      const addressId = addressResult.insertId;
+      // Now, insert the customer
+      const customerQuery = `
+        INSERT INTO customer (store_id, first_name, last_name, email, password,address_id, active, create_date, last_update)
+        VALUES (1, ?, ?, ?,?, ?, 1, NOW(), NOW())
+      `;
+      pool.query(customerQuery, [
+        customerData.first_name,
+        customerData.last_name,
+        customerData.email,
+        customerData.password,
+        addressId
+      ], (err2, customerResult) => {
+        if (err2) {
+          console.error('❌ Error in createCustomer (customer):', err2);
+          return callback(new Error(`Database error (customer): ${err2.message}`));
+        }
+        console.log(`✅ Successfully created customer with ID: ${customerResult.insertId}`);
+        callback(null, { customer_id: customerResult.insertId });
+      });
     });
   },
+
+    getInventory: (callback) => {
+      const query = `
+        SELECT 
+          f.film_id,
+          f.title,
+          f.description,
+          f.release_year,
+          f.rental_rate,
+          f.length,
+          f.rating,
+          COUNT(i.inventory_id) as total_copies,
+          SUM(CASE WHEN r.return_date IS NULL THEN 1 ELSE 0 END) as rented_out
+        FROM film f
+        JOIN inventory i ON f.film_id = i.film_id
+        LEFT JOIN rental r ON i.inventory_id = r.inventory_id AND r.return_date IS NULL
+        WHERE i.store_id = 1
+        GROUP BY f.film_id
+        ORDER BY f.title
+        LIMIT 100
+      `;
+      
+      pool.query(query, (err, rows) => {
+        if (err) {
+          console.error('❌ Error in getInventory:', err);
+          return callback(new Error(`Database error: ${err.message}`));
+        }
+        callback(null, rows);
+      });
+    },
+
 
   searchFilms: (searchTerm, callback) => {
     const query = `

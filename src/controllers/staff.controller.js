@@ -1,5 +1,6 @@
 const staffService = require('../services/staff.service');
 const { logger } = require('../util/logger');
+const bcrypt = require("bcryptjs");
 
 const staffController = {
   dashboard: (req, res) => {
@@ -45,7 +46,6 @@ const staffController = {
     });
   },
 
-
   newRentalForm: (req, res) => {
     const staffId = req.session.user.staff_id || 1;
     const page = parseInt(req.query.page) || 1;
@@ -72,8 +72,6 @@ const staffController = {
       });
     });
   },
-
-
 
   createRental: (req, res) => {
     const { customer_id, inventory_id } = req.body;
@@ -147,10 +145,7 @@ const staffController = {
         });
       }
       
-      res.render('staff/customer-detail', {
-        title: 'Klant Details',
-        customer: customer
-      });
+      res.json(customer);
     });
   },
 
@@ -199,6 +194,129 @@ const staffController = {
         title: 'Recente Betalingen',
         payments: payments
       });
+    });
+  },
+
+  // New inventory management functions
+  addFilm: (req, res) => {
+    const filmData = req.body;
+    const staffId = req.session.user.staff_id || 1;
+    
+    staffService.addFilm(filmData, staffId, (err, result) => {
+      if (err) {
+        logger.error(`Add film error: ${err.message}`);
+        return res.json({ success: false, error: err.message });
+      }
+      
+      logger.info(`Film "${filmData.title}" added by staff ${staffId}`);
+      res.json({ success: true, film_id: result.film_id });
+    });
+  },
+
+  addFilmCopy: (req, res) => {
+    const filmId = req.params.id;
+    const { copies = 1 } = req.body;
+    const staffId = req.session.user.staff_id || 1;
+    
+    staffService.addFilmCopy(filmId, copies, staffId, (err, result) => {
+      if (err) {
+        logger.error(`Add film copy error: ${err.message}`);
+        return res.json({ success: false, error: err.message });
+      }
+      
+      res.json({ success: true, message: `${copies} kopie(ën) toegevoegd` });
+    });
+  },
+
+  removeFilmCopy: (req, res) => {
+    const filmId = req.params.id;
+    const { copies = 1 } = req.body;
+    const staffId = req.session.user.staff_id || 1;
+    
+    staffService.removeFilmCopy(filmId, copies, staffId, (err, result) => {
+      if (err) {
+        logger.error(`Remove film copy error: ${err.message}`);
+        return res.json({ success: false, error: err.message });
+      }
+      
+      res.json({ success: true, message: `${copies} kopie(ën) verwijderd` });
+    });
+  },
+
+  updateFilm: (req, res) => {
+    const filmId = req.params.id;
+    const filmData = req.body;
+    const staffId = req.session.user.staff_id || 1;
+    
+    staffService.updateFilm(filmId, filmData, staffId, (err, result) => {
+      if (err) {
+        logger.error(`Update film error: ${err.message}`);
+        return res.json({ success: false, error: err.message });
+      }
+      
+      res.json({ success: true, message: 'Film bijgewerkt' });
+    });
+  },
+
+  bulkAddCopies: (req, res) => {
+    const { filmIds, copies } = req.body;
+    const staffId = req.session.user.staff_id || 1;
+    
+    if (!filmIds || !Array.isArray(filmIds) || filmIds.length === 0) {
+      return res.json({ success: false, error: 'Geen films geselecteerd' });
+    }
+    
+    staffService.bulkAddCopies(filmIds, copies, staffId, (err, result) => {
+      if (err) {
+        logger.error(`Bulk add copies error: ${err.message}`);
+        return res.json({ success: false, error: err.message });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: `${copies} kopie(ën) toegevoegd aan ${filmIds.length} films` 
+      });
+    });
+  },
+
+  bulkUpdateRates: (req, res) => {
+    const { filmIds, newRate } = req.body;
+    const staffId = req.session.user.staff_id || 1;
+    
+    if (!filmIds || !Array.isArray(filmIds) || filmIds.length === 0) {
+      return res.json({ success: false, error: 'Geen films geselecteerd' });
+    }
+    
+    staffService.bulkUpdateRates(filmIds, newRate, staffId, (err, result) => {
+      if (err) {
+        logger.error(`Bulk update rates error: ${err.message}`);
+        return res.json({ success: false, error: err.message });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: `Tarief €${newRate} toegepast op ${filmIds.length} films` 
+      });
+    });
+  },
+
+  createCustomer: (req, res) => {
+    const { first_name, last_name, email, password, address, city, country } = req.body;
+
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
+      if (err) {
+        return res.render('staff/customers', { error: 'Kon wachtwoord niet hashen' });
+      }
+
+      staffService.createCustomer(
+        { first_name, last_name, email, password: hashedPassword, address, city, country },
+        (err, result) => {
+          if (err) {
+            return res.render('staff/customers', { error: err.message });
+          }
+          res.redirect('/staff/customers');
+        }
+      );
     });
   }
 };
