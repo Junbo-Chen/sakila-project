@@ -10,7 +10,7 @@ var actorRouter = require('./src/routes/actor');
 
 // Nieuwe viewpoint routes
 var staffRouter = require('./src/routes/staff');
-// var customerRouter = require('./src/routes/customer');
+var customerRouter = require('./src/routes/customer');
 var authRouter = require('./src/routes/auth');
 
 var app = express();
@@ -45,6 +45,7 @@ app.use('/', indexRouter);
 app.use('/actor', actorRouter);
 app.use('/auth', authRouter);
 app.use('/staff', staffRouter);
+app.use('/customer', customerRouter);
 // app.use('/customer', customerRouter);
 
 // catch 404

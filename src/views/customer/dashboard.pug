@@ -1,1 +1,19 @@
-h1 test
+extends ../layout
+
+block content
+  .row.mb-4
+    .col-12
+      h1.text-primary
+        i.bi.bi-person-circle.me-2
+        | Welkom, #{user.first_name}!
+      p.lead Dit is jouw persoonlijke dashboard waar je al je verhuur en profiel informatie kunt beheren.
+
+  // Welkom sectie
+  .row.mb-4
+    .col-12
+      .card.bg-primary.text-white
+        .card-body.text-center.py-4
+          h3
+            i.bi.bi-film.me-2
+            | Sakila Video Store
+          p.lead.mb-3 Welkom bij jouw persoonlijke video verhuur dashboard
