@@ -13,6 +13,5 @@ router.post('/login', authController.validate, authController.login);
 
 router.get('/logout', authController.logout);
 
-router.post('/demo-login/:role', authController.demoLogin);
 
 module.exports = router;

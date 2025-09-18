@@ -1,5 +1,6 @@
 const pool = require('../db/sql/connection');
 const staff = require('../models/staff');
+const { create } = require('./actor.dao');
 
 const staffDAO = {
   getDashboardStats: (staffId, callback) => {
@@ -312,32 +313,47 @@ const staffDAO = {
     });
   },
 
-    getInventory: (callback) => {
-    const query = `
-      SELECT 
-        f.film_id,
-        f.title,
-        f.description,
-        f.release_year,
-        f.rental_rate,
-        f.length,
-        f.rating,
-        COUNT(i.inventory_id) as total_copies,
-        SUM(CASE WHEN r.return_date IS NULL THEN 1 ELSE 0 END) as rented_out
-      FROM film f
-      JOIN inventory i ON f.film_id = i.film_id
-      LEFT JOIN rental r ON i.inventory_id = r.inventory_id AND r.return_date IS NULL
-      GROUP BY f.film_id
-      ORDER BY f.title
-      LIMIT 100
+  createCustomer: (customerData, callback) => {
+    const addressQuery = `
+      INSERT INTO address 
+      (address, address2, district, city_id, postal_code, phone, location, last_update)
+      VALUES (?, ?, ?, ?, ?, ?, ST_GeomFromText(?), NOW())
     `;
-    
-    pool.query(query, (err, rows) => {
+
+    const location = customerData.location || 'POINT(0 0)'; 
+    pool.query(addressQuery, [
+      customerData.address,
+      customerData.address2 || '',
+      customerData.district || 'Unknown',
+      customerData.city_id || 1, 
+      customerData.postal_code || '',
+      customerData.phone || '',
+      location
+    ], (err, addressResult) => {
       if (err) {
-        console.error('❌ Error in getInventory:', err);
-        return callback(new Error(`Database error: ${err.message}`));
+        console.error('❌ Error in createCustomer (address):', err);
+        return callback(new Error(`Database error (address): ${err.message}`));
       }
-      callback(null, rows);
+      const addressId = addressResult.insertId;
+      // Now, insert the customer
+      const customerQuery = `
+        INSERT INTO customer (store_id, first_name, last_name, email, password,address_id, active, create_date, last_update)
+        VALUES (1, ?, ?, ?,?, ?, 1, NOW(), NOW())
+      `;
+      pool.query(customerQuery, [
+        customerData.first_name,
+        customerData.last_name,
+        customerData.email,
+        customerData.password,
+        addressId
+      ], (err2, customerResult) => {
+        if (err2) {
+          console.error('❌ Error in createCustomer (customer):', err2);
+          return callback(new Error(`Database error (customer): ${err2.message}`));
+        }
+        console.log(`✅ Successfully created customer with ID: ${customerResult.insertId}`);
+        callback(null, { customer_id: customerResult.insertId });
+      });
     });
   },
 
@@ -372,33 +388,112 @@ const staffDAO = {
       callback(null, rows);
     });
   },
-
-  getRecentPayments: (staffId, callback) => {
-    const query = `
-      SELECT 
-        p.payment_id,
-        p.amount,
-        p.payment_date,
-        CONCAT(c.first_name, ' ', c.last_name) as customer_name,
-        f.title as film_title
-      FROM payment p
-      JOIN customer c ON p.customer_id = c.customer_id
-      JOIN rental r ON p.rental_id = r.rental_id
-      JOIN inventory i ON r.inventory_id = i.inventory_id
-      JOIN film f ON i.film_id = f.film_id
-      WHERE p.staff_id = ?
-      ORDER BY p.payment_date DESC
-      LIMIT 50
+  updateCustomer: (customerId, customerData, callback) => {
+    // First, get the current customer to get their address_id
+    const getCustomerQuery = `
+      SELECT c.*, a.address_id 
+      FROM customer c 
+      LEFT JOIN address a ON c.address_id = a.address_id 
+      WHERE c.customer_id = ?
     `;
     
-    pool.query(query, [staffId], (err, rows) => {
+    pool.query(getCustomerQuery, [customerId], (err, customerRows) => {
       if (err) {
-        console.error('❌ Error in getRecentPayments:', err);
+        console.error('❌ Error in updateCustomer (get customer):', err);
         return callback(new Error(`Database error: ${err.message}`));
       }
-      callback(null, rows);
+      
+      if (customerRows.length === 0) {
+        return callback(new Error('Klant niet gevonden'));
+      }
+      
+      const currentCustomer = customerRows[0];
+      const addressId = currentCustomer.address_id;
+      
+      // Update address if address_id exists
+      if (addressId && (customerData.address || customerData.city || customerData.country)) {
+        const updateAddressQuery = `
+          UPDATE address 
+          SET address = ?, 
+              last_update = NOW()
+          WHERE address_id = ?
+        `;
+        
+        pool.query(updateAddressQuery, [
+          customerData.address || currentCustomer.address,
+          addressId
+        ], (err) => {
+          if (err) {
+            console.error('❌ Error in updateCustomer (address):', err);
+            return callback(new Error(`Database error (address): ${err.message}`));
+          }
+          
+          updateCustomerRecord();
+        });
+      } else if (!addressId && customerData.address) {
+        // Create new address if customer doesn't have one but address is provided
+        const createAddressQuery = `
+          INSERT INTO address 
+          (address, address2, district, city_id, postal_code, phone, location, last_update)
+          VALUES (?, '', 'Unknown', 1, '', '', ST_GeomFromText('POINT(0 0)'), NOW())
+        `;
+        
+        pool.query(createAddressQuery, [customerData.address], (err, result) => {
+          if (err) {
+            console.error('❌ Error in updateCustomer (create address):', err);
+            return callback(new Error(`Database error (create address): ${err.message}`));
+          }
+          
+          const newAddressId = result.insertId;
+          updateCustomerRecord(newAddressId);
+        });
+      } else {
+        updateCustomerRecord();
+      }
+      
+      function updateCustomerRecord(newAddressId = null) {
+        // Update customer record
+        const updateCustomerQuery = `
+          UPDATE customer 
+          SET first_name = ?, 
+              last_name = ?, 
+              email = ?, 
+              active = ?,
+              ${newAddressId ? 'address_id = ?,' : ''} 
+              last_update = NOW()
+          WHERE customer_id = ?
+        `;
+        
+        const queryParams = [
+          customerData.first_name,
+          customerData.last_name,
+          customerData.email,
+          customerData.active
+        ];
+        
+        if (newAddressId) {
+          queryParams.push(newAddressId);
+        }
+        
+        queryParams.push(customerId);
+        
+        pool.query(updateCustomerQuery, queryParams, (err, result) => {
+          if (err) {
+            console.error('❌ Error in updateCustomer (customer):', err);
+            return callback(new Error(`Database error (customer): ${err.message}`));
+          }
+          
+          if (result.affectedRows === 0) {
+            return callback(new Error('Klant niet gevonden of geen wijzigingen'));
+          }
+          
+          console.log(`✅ Successfully updated customer ID: ${customerId}`);
+          callback(null, { customer_id: customerId });
+        });
+      }
     });
   }
+
 };
 
 module.exports = staffDAO;

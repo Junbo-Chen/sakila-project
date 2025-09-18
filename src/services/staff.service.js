@@ -1,3 +1,4 @@
+const { create } = require('../dao/actor.dao');
 const staffDAO = require('../dao/staff.dao');
 const { logger } = require('../util/logger');
 
@@ -12,7 +13,6 @@ const staffService = {
     staffDAO.getActiveRentals(staffId, page, callback);
   },
 
-  // ✅ Fixed parameter order - page first, then callback
   getAvailableFilms: (page, callback) => {
     logger.info(`Getting available films for rental - page: ${page}`);
     staffDAO.getAvailableFilms(page, callback);
@@ -22,7 +22,6 @@ const staffService = {
     logger.info(`Getting available films with filters - page: ${page}, search: "${searchQuery}", category: "${categoryFilter}"`);
     staffDAO.getAvailableFilmsWithFilter(page, searchQuery, categoryFilter, callback);
   },
-
 
   createRental: (customerId, inventoryId, staffId, callback) => {
     logger.info(`Creating rental: customer ${customerId}, inventory ${inventoryId}, staff ${staffId}`);
@@ -51,15 +50,18 @@ const staffService = {
     }
     staffDAO.searchCustomers(searchTerm, callback);
   },
+  
+  createCustomer: (customerData, callback) => {
+    logger.info('Creating new customer');
+    if (!customerData.first_name || !customerData.last_name || !customerData.email || !customerData.address) {
+      return callback(new Error('Alle velden zijn verplicht'));
+    }
+    staffDAO.createCustomer(customerData, callback);
+  },
 
   getCustomerDetails: (customerId, callback) => {
     logger.info(`Getting details for customer ID: ${customerId}`);
     staffDAO.getCustomerDetails(customerId, callback);
-  },
-
-  getInventory: (callback) => {
-    logger.info('Getting inventory overview');
-    staffDAO.getInventory(callback);
   },
 
   searchFilms: (searchTerm, callback) => {
@@ -73,7 +75,20 @@ const staffService = {
   getRecentPayments: (staffId, callback) => {
     logger.info(`Getting recent payments for staff ID: ${staffId}`);
     staffDAO.getRecentPayments(staffId, callback);
+  },
+  updateCustomer: (customerId, customerData, callback) => {
+    staffDAO.updateCustomer(customerId, customerData, (err, result) => {
+      if (err) {
+        logger.error(`Service error updating customer ${customerId}: ${err.message}`);
+        return callback(err);
+      }
+      
+      logger.info(`Successfully updated customer ${customerId}`);
+      callback(null, result);
+    });
   }
-};
 
+
+
+};
 module.exports = staffService;

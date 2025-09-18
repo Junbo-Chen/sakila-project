@@ -11,7 +11,6 @@ var actorRouter = require('./src/routes/actor');
 // Nieuwe viewpoint routes
 var staffRouter = require('./src/routes/staff');
 // var customerRouter = require('./src/routes/customer');
-// var adminRouter = require('./src/routes/admin');
 var authRouter = require('./src/routes/auth');
 
 var app = express();

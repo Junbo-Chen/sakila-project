@@ -46,7 +46,7 @@ const authController = {
           res.redirect('/staff/dashboard');
           break;
         case 'customer':
-          res.redirect('/customer');
+          res.redirect('/customer/dashboard');
           break;
         default:
           res.redirect('/');
@@ -69,48 +69,7 @@ const authController = {
       res.redirect('/auth/login');
     }
   },
-  
-  // Demo login voor testing (zonder wachtwoord)
-  demoLogin: (req, res) => {
-    const { role } = req.params;
-    
-    let demoUser;
-    switch (role) {
-      case 'staff':
-        demoUser = { 
-          staff_id: 1, 
-          first_name: 'Mike', 
-          last_name: 'Hillyer',
-          email: 'mike@sakila.com'
-        };
-        break;
-      case 'customer':
-        demoUser = { 
-          customer_id: 1, 
-          first_name: 'Mary', 
-          last_name: 'Smith',
-          email: 'mary@sakila.com'
-        };
-        break;
-    }
-    
-    req.session.user = demoUser;
-    req.session.userRole = role;
-    
-    logger.info(`Demo login as ${role}: ${demoUser.first_name}`);
-    
-    switch (role) {
-      case 'admin':
-        res.redirect('/admin/dashboard');
-        break;
-      case 'staff':
-        res.redirect('/staff/dashboard');
-        break;
-      case 'customer':
-        res.redirect('/customer/dashboard');
-        break;
-    }
-  }
+
 };
 
 module.exports = authController;

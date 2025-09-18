@@ -5,10 +5,14 @@ block content
     h2.text-primary 
       i.bi.bi-people.me-2
       | Klanten Beheer
-    .input-group(style="max-width: 300px")
-      input.form-control(type="text" id="customer_search" placeholder="Zoek klanten...")
-      button.btn.btn-primary(type="button" onclick="searchCustomers()")
-        i.bi.bi-search
+    .d-flex.justify-content-between.align-items-center
+      .btn-group
+        button.btn.btn-success(type="button" data-bs-toggle="modal" data-bs-target="#createCustomerModal")
+          i.bi.bi-plus-circle.me-1
+      .input-group(style="max-width: 300px")
+        input.form-control(type="text" id="customer_search" placeholder="Zoek klanten...")
+        button.btn.btn-primary(type="button" onclick="searchCustomers()")
+          i.bi.bi-search
   
   #search_results.mb-3
 
@@ -57,41 +61,99 @@ block content
                       span.text-muted Nog nooit
                   td
                     .btn-group(role="group")
-                      a.btn.btn-sm.btn-info(href=`/staff/customers/${customer.customer_id}`)
+                      a.btn.btn-sm.btn-info(href="javascript:void(0)" onclick=`showCustomerDetails(${customer.customer_id})`)
                         i.bi.bi-eye.me-1
-                        | Details
-                      button.btn.btn-sm.btn-success(onclick=`startRental(${customer.customer_id}, '${customer.full_name}')`)
-                        i.bi.bi-plus.me-1
-                        | Verhuur
+                      a.btn.btn-sm.btn-warning(href=`/staff/customer/${customer.customer_id}/edit`)
+                        i.bi.bi-pencil.me-1
   else
     .alert.alert-info.text-center
       h4 
         i.bi.bi-info-circle.me-2
         | Geen klanten gevonden
       p Er zijn geen klanten beschikbaar in het systeem.
+  
+  #customerDetailsModal.modal.fade(tabindex="-1")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title Klant Details
+          button.btn-close(type="button" data-bs-dismiss="modal")
+        .modal-body
+          div#customerDetailsContent
+            .text-center.text-muted
+              i.bi.bi-hourglass-split.me-2
+              | Laden...
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Sluiten
 
-  // Quick Rental Modal
-  #quickRentalModal.modal.fade(tabindex="-1")
+  #createCustomerModal.modal.fade(tabindex="-1")
     .modal-dialog
       .modal-content
         .modal-header
-          h5.modal-title Snelle Verhuur
+          h5.modal-title Nieuwe Klant
           button.btn-close(type="button" data-bs-dismiss="modal")
-        .modal-body
-          p Nieuwe verhuur voor: <strong id="modal_customer_name"></strong></p>
-          .mb-3
-            label.form-label Film zoeken
-            .input-group
-              input.form-control(type="text" id="modal_film_search" placeholder="Zoek film...")
-              button.btn.btn-primary(type="button" onclick="searchModalFilms()")
-                i.bi.bi-search
-          #modal_film_results
-        .modal-footer
-          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Annuleren
-          a.btn.btn-primary(href="/staff/rentals/new") Uitgebreide Verhuur
+        form(method="POST" action="/staff/customers/create")
+          .modal-body
+            .mb-3
+              label.form-label Voornaam
+              input.form-control(type="text" name="first_name" required)
+            .mb-3
+              label.form-label Achternaam
+              input.form-control(type="text" name="last_name" required)
+            .mb-3
+              label.form-label Email
+              input.form-control(type="email" name="email" required)
+            .mb-3
+              label.form-label Wachtwoord
+              input.form-control(type="password" name="password" required)
+            .mb-3
+              label.form-label Adres
+              input.form-control(type="text" name="address" requeired)
+            .mb-3
+              label.form-label Stad
+              input.form-control(type="text" name="city" required)
+            .mb-3
+              label.form-label Land
+              input.form-control(type="text" name="country" required)
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Annuleren
+            button.btn.btn-primary(type="submit") Opslaan
 
   script.
     let currentCustomerId = null;
+    function showCustomerDetails(customerId) {
+        fetch(`/staff/customer/${customerId}`)
+          .then(res => res.json())
+          .then(customer => {
+            const html = `
+              <p><strong>ID:</strong> ${customer.customer_id}</p>
+              <p><strong>Naam:</strong> ${customer.first_name} ${customer.last_name}</p>
+              <p><strong>Email:</strong> ${customer.email}</p>
+              <p><strong>Adres:</strong> ${customer.address || '-'}, ${customer.city || ''}, ${customer.country || ''}</p>
+              <p><strong>Status:</strong> ${customer.active ? 'Actief' : 'Inactief'}</p>
+              <p><strong>Totaal Verhuur:</strong> ${customer.total_rentals || 0}</p>
+              <p><strong>Laatst Verhuur:</strong> ${customer.last_rental_date ? new Date(customer.last_rental_date).toLocaleDateString('nl-NL') : 'Nog nooit'}</p>
+              <div class="mt-3">
+                <a href="/staff/customer/${customer.customer_id}/edit" class="btn btn-warning btn-sm">
+                  <i class="bi bi-pencil me-1"></i> Bewerken
+                </a>
+              </div>
+            `;
+            document.getElementById('customerDetailsContent').innerHTML = html;
+
+            const modalEl = document.getElementById('customerDetailsModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modalEl.addEventListener('shown.bs.modal', () => {
+              modalEl.querySelector('[tabindex], button, input, a')?.focus();
+            });
+            modal.show();
+          })
+          .catch(err => {
+            document.getElementById('customerDetailsContent').innerHTML =
+              '<div class="alert alert-danger">Kon klantgegevens niet laden.</div>';
+            console.error(err);
+          });
+      }
 
     function searchCustomers() {
       const query = document.getElementById('customer_search').value;
@@ -126,12 +188,14 @@ block content
               <small class="text-muted">${customer.email} - ID: ${customer.customer_id}</small>
             </div>
             <div class="btn-group">
-              <a href="/staff/customers/${customer.customer_id}" class="btn btn-sm btn-info">
-                <i class="bi bi-eye"></i> Details
-              </a>
-              <button class="btn btn-sm btn-success" onclick="startRental(${customer.customer_id}, '${customer.full_name}')">
-                <i class="bi bi-plus"></i> Verhuur
+              <button 
+                class="btn btn-sm btn-info" 
+                onclick="showCustomerDetails(${customer.customer_id})">
+                <i class="bi bi-eye me-1"></i> Details
               </button>
+              <a href="/staff/customer/${customer.customer_id}/edit" class="btn btn-sm btn-warning">
+                <i class="bi bi-pencil me-1"></i> Bewerken
+              </a>
             </div>
           </div>
         `;
@@ -144,68 +208,6 @@ block content
       currentCustomerId = customerId;
       document.getElementById('modal_customer_name').textContent = customerName;
       new bootstrap.Modal(document.getElementById('quickRentalModal')).show();
-    }
-
-    function searchModalFilms() {
-      const query = document.getElementById('modal_film_search').value;
-      if (query.length < 2) return;
-      
-      fetch(`/staff/films/search?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.films) {
-            displayModalFilms(data.films);
-          }
-        })
-        .catch(error => console.error('Error:', error));
-    }
-
-    function displayModalFilms(films) {
-      const resultsDiv = document.getElementById('modal_film_results');
-      if (films.length === 0) {
-        resultsDiv.innerHTML = '<div class="alert alert-warning">Geen films gevonden</div>';
-        return;
-      }
-      
-      let html = '<div class="list-group mt-2">';
-      films.forEach(film => {
-        const available = film.total_copies - (film.rented_out || 0);
-        if (available > 0) {
-          html += `
-            <button type="button" class="list-group-item list-group-item-action" 
-                    onclick="quickRental(${currentCustomerId}, ${film.film_id}, '${film.title}')">
-              <strong>${film.title}</strong> (${film.release_year})<br>
-              <small class="text-muted">€${film.rental_rate} - ${available} beschikbaar</small>
-            </button>
-          `;
-        }
-      });
-      html += '</div>';
-      resultsDiv.innerHTML = html;
-    }
-
-    function quickRental(customerId, filmId, filmTitle) {
-      if (confirm(`Verhuur "${filmTitle}" aan deze klant?`)) {
-        // Create a form and submit it
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/staff/rentals/create';
-        
-        const customerInput = document.createElement('input');
-        customerInput.type = 'hidden';
-        customerInput.name = 'customer_id';
-        customerInput.value = customerId;
-        
-        const inventoryInput = document.createElement('input');
-        inventoryInput.type = 'hidden';
-        inventoryInput.name = 'inventory_id';
-        inventoryInput.value = filmId; // Simplified - should be actual inventory_id
-        
-        form.appendChild(customerInput);
-        form.appendChild(inventoryInput);
-        document.body.appendChild(form);
-        form.submit();
-      }
     }
 
     // Enable enter key for search

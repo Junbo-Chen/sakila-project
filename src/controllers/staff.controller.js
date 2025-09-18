@@ -1,5 +1,6 @@
 const staffService = require('../services/staff.service');
 const { logger } = require('../util/logger');
+const bcrypt = require("bcryptjs");
 
 const staffController = {
   dashboard: (req, res) => {
@@ -45,7 +46,6 @@ const staffController = {
     });
   },
 
-
   newRentalForm: (req, res) => {
     const staffId = req.session.user.staff_id || 1;
     const page = parseInt(req.query.page) || 1;
@@ -72,8 +72,6 @@ const staffController = {
       });
     });
   },
-
-
 
   createRental: (req, res) => {
     const { customer_id, inventory_id } = req.body;
@@ -147,10 +145,7 @@ const staffController = {
         });
       }
       
-      res.render('staff/customer-detail', {
-        title: 'Klant Details',
-        customer: customer
-      });
+      res.json(customer);
     });
   },
 
@@ -200,7 +195,84 @@ const staffController = {
         payments: payments
       });
     });
-  }
+  },
+
+  createCustomer: (req, res) => {
+    const { first_name, last_name, email, password, address, city, country } = req.body;
+
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
+      if (err) {
+        return res.render('staff/customers', { error: 'Kon wachtwoord niet hashen' });
+      }
+
+      staffService.createCustomer(
+        { first_name, last_name, email, password: hashedPassword, address, city, country },
+        (err, result) => {
+          if (err) {
+            return res.render('staff/customers', { error: err.message });
+          }
+          res.redirect('/staff/customers');
+        }
+      );
+    });
+  },
+  getCustomerEditForm: (req, res) => {
+    const customerId = req.params.id;
+    
+    staffService.getCustomerDetails(customerId, (err, customer) => {
+      if (err) {
+        return res.render('error', { 
+          title: 'Customer Error', 
+          message: err.message,
+          error: err 
+        });
+      }
+      
+      res.render('staff/customerEdit', {
+        title: 'Klant Bewerken',
+        customer: customer
+      });
+    });
+  },
+
+  updateCustomer: (req, res) => {
+    const customerId = req.params.id;
+    const { first_name, last_name, email, address, city, country, active } = req.body;
+
+    const customerData = {
+      first_name,
+      last_name,
+      email,
+      address,
+      city,
+      country,
+      active: active === 'on' || active === '1' ? 1 : 0
+    };
+
+    staffService.updateCustomer(customerId, customerData, (err, result) => {
+      if (err) {
+        logger.error(`Update customer error: ${err.message}`);
+        return staffService.getCustomerDetails(customerId, (getErr, customer) => {
+          if (getErr) {
+            return res.render('error', { 
+              title: 'Customer Error', 
+              message: getErr.message,
+              error: getErr 
+            });
+          }
+          
+          res.render('staff/customerEdit', {
+            title: 'Klant Bewerken',
+            customer: customer,
+            error: err.message
+          });
+        });
+      }
+      
+      res.redirect('/staff/customers');
+    });
+  },
+
 };
 
 module.exports = staffController;
