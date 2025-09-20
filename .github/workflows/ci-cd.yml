@@ -44,6 +44,10 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
           DB_PORT: ${{ secrets.DB_PORT }}
+          STAFF_EMAIL : ${{ secrets.STAFF_EMAIL }}
+          STAFF_PASSWORD : ${{ secrets.STAFF_PASSWORD }}
+          CUSTOMER_EMAIL : ${{ secrets.CUSTOMER_EMAIL }}
+          CUSTOMER_PASSWORD : ${{ secrets.CUSTOMER_PASSWORD }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           
       - name: Upload test screenshots (on failure)
@@ -95,6 +99,10 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
           DB_PORT: ${{ secrets.DB_PORT }}
+          STAFF_EMAIL : ${{ secrets.STAFF_EMAIL }}
+          STAFF_PASSWORD : ${{ secrets.STAFF_PASSWORD }}
+          CUSTOMER_EMAIL : ${{ secrets.CUSTOMER_EMAIL }}
+          CUSTOMER_PASSWORD : ${{ secrets.CUSTOMER_PASSWORD }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
       - name: Upload artifact for deployment job
