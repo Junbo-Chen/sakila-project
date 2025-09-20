@@ -23,8 +23,7 @@ jobs:
         run: npm install
 
       - name: Run tests
-        run: npm test
-
+        run: npm run cypress:run
 
   build:
     runs-on: ubuntu-latest
