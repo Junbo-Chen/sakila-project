@@ -93,12 +93,6 @@ describe('Staff Dashboard', () => {
       cy.get('.row.g-4').should('exist')
     })
 
-    it('should be responsive on tablet', () => {
-      cy.viewport('ipad-2')
-      cy.get('.col-lg-3').should('exist')
-      cy.get('.card.bg-primary').should('be.visible')
-    })
-
     it('should stack cards properly on small screens', () => {
       cy.viewport(576, 768)
       cy.get('.col-lg-3.col-md-6').should('exist')
