@@ -21,9 +21,25 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        
+
+      - name: Start server
+        run: npm start &
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:3000
+
       - name: Run Cypress tests
-        run: npm run test:e2e
+        run: npm run cypress:run
+        env:
+          CYPRESS_STAFF_EMAIL: ${{ secrets.STAFF_EMAIL }}
+          CYPRESS_STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD }}
+          CYPRESS_CUSTOMER_EMAIL: ${{ secrets.CUSTOMER_EMAIL }}
+          CYPRESS_CUSTOMER_PASSWORD: ${{ secrets.CUSTOMER_PASSWORD }}
 
   build:
     runs-on: ubuntu-latest
