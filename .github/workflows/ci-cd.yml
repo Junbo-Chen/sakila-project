@@ -11,6 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     name: Run Tests
     
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sakila_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
       - uses: actions/checkout@v4
 
@@ -18,12 +28,17 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '22.x'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run tests
-        run: npm run cypress:run
+      - name: Start server and run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm start
+          wait-on: 'http://localhost:3000'
+          wait-on-timeout: 60
 
   build:
     runs-on: ubuntu-latest
