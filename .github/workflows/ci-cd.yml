@@ -2,84 +2,106 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 6 AM UTC
+    - cron: '0 6 * * *'
+
+env:
+  # Database configuration
+  DATABASE_URL: ${{ secrets.DB_DATABASE }}
+  
+  # Application configuration
+  NODE_ENV: test
+  PORT: 3000
+  
+  # Test credentials (stored in GitHub Secrets)
+  CYPRESS_STAFF_EMAIL: ${{ secrets.STAFF_EMAIL }}
+  CYPRESS_STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD }}
+  CYPRESS_CUSTOMER_EMAIL: ${{ secrets.CUSTOMER_EMAIL }}
+  CYPRESS_CUSTOMER_PASSWORD: ${{ secrets.CUSTOMER_PASSWORD }}
 
 jobs:
-  test:
+  cypress-run:
     runs-on: ubuntu-latest
-    name: Run Tests
+    
+    services:
+      # PostgreSQL database service
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm ci
+          npm install --save-dev cypress
 
-      - name: Install wait-on globally
-        run: npm install -g wait-on
+      - name: Setup database
+        run: |
+          # Run database migrations and seed data
+          npm run db:migrate
+          npm run db:seed
 
-      - name: Start server
-        run: npm start &
+      - name: Start application
+        run: |
+          npm start &
+          npx wait-on http://localhost:3000
         env:
-          NODE_ENV: test
-          DB_HOST: 127.0.0.1
-          DB_USER: root
-          DB_PASSWORD: root
-          DB_DATABASE: sakila
-          DB_PORT: 3306
-          SESSION_SECRET: test-secret-key
-
-      - name: Wait for server to be ready
-        run: wait-on http://localhost:3000 --timeout 60000
+          CI: true
 
       - name: Run Cypress tests
-        run: npm run cypress:run
-        env:
-          CYPRESS_STAFF_EMAIL: Mike.Hillyer@sakilastaff.com
-          CYPRESS_STAFF_PASSWORD: admin
-          CYPRESS_CUSTOMER_EMAIL: test@test.nl
-          CYPRESS_CUSTOMER_PASSWORD: test
+        uses: cypress-io/github-action@v6
+        with:
+          wait-on: 'http://localhost:3000'
+          wait-on-timeout: 120
+          browser: chrome
+          record: true
+          parallel: true
 
-      - name: Upload test artifacts on failure
+      - name: Upload Cypress screenshots
+        uses: actions/upload-artifact@v4
         if: failure()
-        uses: actions/upload-artifact@v4
         with:
-          name: cypress-artifacts
-          path: |
-            cypress/screenshots
-            cypress/videos
+          name: cypress-screenshots-${{ matrix.node-version }}
+          path: cypress/screenshots
 
-  build:
-    runs-on: ubuntu-latest
-    needs: test
-    permissions:
-      contents: read
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
-        with:
-          node-version: '22.x'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Build application
-        run: npm run build --if-present
-      
-      - name: Upload artifact for deployment job
+      - name: Upload Cypress videos
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: node-app
-          path: .
+          name: cypress-videos-${{ matrix.node-version }}
+          path: cypress/videos
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-results-${{ matrix.node-version }}
+          path: |
+            cypress/reports
+            mochawesome-report

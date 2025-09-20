@@ -6,9 +6,9 @@
   "scripts": {
     "start": "node bin/www",
     "dev": "nodemon bin/www",
-    "cypress:open": "cypress open",
+    "cy:run": "start-server-and-test start http://localhost:3000 cypress:run",
     "cypress:run": "cypress run",
-    "test:e2e": "start-server-and-test start http://localhost:3000 cypress:run"
+    "cypress:open": "cypress open"
   },
   "keywords": [],
   "author": "",
