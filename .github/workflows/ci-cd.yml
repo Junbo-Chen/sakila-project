@@ -1,22 +1,38 @@
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-  schedule:
-    # Run tests daily at 6 AM UTC
-    - cron: '0 6 * * *'
+name: E2E Tests
+on: [push, pull_request]
 
 jobs:
-  cypress-run:
-    runs-on: ubuntu-24.04
+  cypress:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sakila
+        options: --health-cmd="mysqladmin ping" --health-interval=10s
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          build: npm run build
-          start: npm start
+          node-version: '22'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      # - name: Setup test database
+      #   run: |
+      #     mysql -h127.0.0.1 -uroot -ptestpass sakila < database/sakila-schema.sql
+      #     mysql -h127.0.0.1 -uroot -ptestpass sakila < database/sakila-data.sql
+      
+      - name: Start application
+        run: npm start &
+        env:
+          DB_PASSWORD: root
+          NODE_ENV: test
+      
+      - name: Run Cypress
+        run: npm run cypress:run
+        env:
+          CYPRESS_baseUrl: http://localhost:3000
