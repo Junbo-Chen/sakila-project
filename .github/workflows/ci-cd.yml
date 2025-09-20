@@ -36,24 +36,6 @@ jobs:
       - name: Install wait-on globally
         run: npm install -g wait-on
 
-      - name: Setup test database
-        run: |
-          # Wait for MySQL to be ready
-          sleep 10
-          
-          # Download and setup Sakila database
-          wget https://downloads.mysql.com/docs/sakila-db.zip
-          unzip sakila-db.zip
-          mysql -h127.0.0.1 -P3306 -uroot -proot sakila_test < sakila-db/sakila-schema.sql
-          mysql -h127.0.0.1 -P3306 -uroot -proot sakila_test < sakila-db/sakila-data.sql
-          
-          # Add password column and test users
-          mysql -h127.0.0.1 -P3306 -uroot -proot sakila_test -e "
-            ALTER TABLE customer ADD COLUMN password VARCHAR(255);
-            UPDATE customer SET password = '\$2a\$10\$N9qo8uLOickgx2ZMRZoMye.YT8C6YsuuCm6.z4jqjYQJKxXKhOp2m' WHERE email = 'MARY.SMITH@sakilacustomer.com';
-            UPDATE staff SET password = '\$2a\$10\$N9qo8uLOickgx2ZMRZoMye.YT8C6YsuuCm6.z4jqjYQJKxXKhOp2m' WHERE email = 'Mike.Hillyer@sakilastaff.com';
-          "
-
       - name: Start server
         run: npm start &
         env:
@@ -72,9 +54,9 @@ jobs:
         run: npm run cypress:run
         env:
           CYPRESS_STAFF_EMAIL: Mike.Hillyer@sakilastaff.com
-          CYPRESS_STAFF_PASSWORD: password123
-          CYPRESS_CUSTOMER_EMAIL: MARY.SMITH@sakilacustomer.com
-          CYPRESS_CUSTOMER_PASSWORD: password123
+          CYPRESS_STAFF_PASSWORD: admin
+          CYPRESS_CUSTOMER_EMAIL: test@test.nl
+          CYPRESS_CUSTOMER_PASSWORD: test
 
       - name: Upload test artifacts on failure
         if: failure()
