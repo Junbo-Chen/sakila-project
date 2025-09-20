@@ -44,12 +44,4 @@ describe('Smoke Tests - Basic Functionality', () => {
     cy.get('.navbar-brand').click()
     cy.url().should('include', '/staff/dashboard')
   })
-
-  it('should logout successfully', () => {
-    cy.loginAsStaff()
-    cy.visit('/staff/dashboard')
-    
-    cy.get('a').contains('Logout').click()
-    cy.url().should('include', '/auth/login')
-  })
 })

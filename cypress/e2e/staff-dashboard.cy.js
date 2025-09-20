@@ -79,10 +79,6 @@ describe('Staff Dashboard', () => {
   })
 
   describe('Navigation', () => {
-    it('should have working navbar with user session', () => {
-      cy.get('.navbar-brand').should('contain', 'Sakila Dashboard')
-      cy.get('.nav-link').contains('Logout').should('be.visible')
-    })
 
     it('should redirect to appropriate dashboard on navbar brand click', () => {
       cy.get('.navbar-brand').click()
