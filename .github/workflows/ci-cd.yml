@@ -11,6 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     name: Run Tests
     
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sakila_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -18,28 +28,62 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '22.x'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
+      - name: Install wait-on globally
+        run: npm install -g wait-on
+
+      - name: Setup test database
+        run: |
+          # Wait for MySQL to be ready
+          sleep 10
+          
+          # Download and setup Sakila database
+          wget https://downloads.mysql.com/docs/sakila-db.zip
+          unzip sakila-db.zip
+          mysql -h127.0.0.1 -P3306 -uroot -proot sakila_test < sakila-db/sakila-schema.sql
+          mysql -h127.0.0.1 -P3306 -uroot -proot sakila_test < sakila-db/sakila-data.sql
+          
+          # Add password column and test users
+          mysql -h127.0.0.1 -P3306 -uroot -proot sakila_test -e "
+            ALTER TABLE customer ADD COLUMN password VARCHAR(255);
+            UPDATE customer SET password = '\$2a\$10\$N9qo8uLOickgx2ZMRZoMye.YT8C6YsuuCm6.z4jqjYQJKxXKhOp2m' WHERE email = 'MARY.SMITH@sakilacustomer.com';
+            UPDATE staff SET password = '\$2a\$10\$N9qo8uLOickgx2ZMRZoMye.YT8C6YsuuCm6.z4jqjYQJKxXKhOp2m' WHERE email = 'Mike.Hillyer@sakilastaff.com';
+          "
+
       - name: Start server
         run: npm start &
         env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          NODE_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASSWORD: root
+          DB_DATABASE: sakila_test
+          DB_PORT: 3306
+          SESSION_SECRET: test-secret-key
 
       - name: Wait for server to be ready
-        run: npx wait-on http://localhost:3000
+        run: wait-on http://localhost:3000 --timeout 60000
 
       - name: Run Cypress tests
         run: npm run cypress:run
         env:
-          CYPRESS_STAFF_EMAIL: ${{ secrets.STAFF_EMAIL }}
-          CYPRESS_STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD }}
-          CYPRESS_CUSTOMER_EMAIL: ${{ secrets.CUSTOMER_EMAIL }}
-          CYPRESS_CUSTOMER_PASSWORD: ${{ secrets.CUSTOMER_PASSWORD }}
+          CYPRESS_STAFF_EMAIL: Mike.Hillyer@sakilastaff.com
+          CYPRESS_STAFF_PASSWORD: password123
+          CYPRESS_CUSTOMER_EMAIL: MARY.SMITH@sakilacustomer.com
+          CYPRESS_CUSTOMER_PASSWORD: password123
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            cypress/screenshots
+            cypress/videos
 
   build:
     runs-on: ubuntu-latest
