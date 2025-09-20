@@ -8,7 +8,6 @@ html
     link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css")
     link(rel="stylesheet", href="/stylesheets/style.css")
     script(src="https://cdn.jsdelivr.net/npm/sweetalert2@11")
-    
 
   body
     nav.navbar.navbar-expand-lg.navbar-dark
@@ -20,14 +19,27 @@ html
           span.navbar-toggler-icon
         #navbarNav.collapse.navbar-collapse
           ul.navbar-nav.ms-auto
-            if !user
-              li.nav-item
-                a.nav-link(href="/auth/login") Login
+            if user
+              li.nav-item.dropdown
+                a.nav-link.dropdown-toggle(href="#" id="userDropdown" role="button" data-bs-toggle="dropdown")
+                  i.bi.bi-person-circle.me-1
+                  | #{user.first_name} #{user.last_name}
+                ul.dropdown-menu
+                  li
+                    span.dropdown-item-text
+                      small.text-muted Ingelogd als #{userRole}
+                  li
+                    hr.dropdown-divider
+                  li
+                    a.dropdown-item(href="/auth/logout")
+                      i.bi.bi-box-arrow-right.me-1
+                      | Logout
             else
               li.nav-item
-                a.nav-link(href="/auth/logout") Logout
+                a.nav-link(href="/auth/login")
+                  i.bi.bi-box-arrow-in-right.me-1
+                  | Login
 
-    
     .main-content
       .container.py-4
         block content
