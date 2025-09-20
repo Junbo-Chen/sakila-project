@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs"); // gebruik bcrypt voor wachtwoorden
+const bcrypt = require("bcryptjs");
 const authDAO = require("../dao/auth.dao");
 
 const authService = {
@@ -6,11 +6,12 @@ const authService = {
     if (!email || !role) {
       return callback(new Error("Email en rol zijn verplicht"));
     }
-    if (role === "staff" && !password) {
-      return callback(new Error("Wachtwoord is verplicht voor staff"));
+    if (!password) {
+      return callback(new Error("Wachtwoord is verplicht"));
     }
-    return callback(null); // validatie geslaagd
+    return callback(null);
   },
+
   authenticateUser: (email, password, role, callback) => {
     switch (role) {
       case "staff":
@@ -29,8 +30,17 @@ const authService = {
         authDAO.getCustomerByEmail(email, (err, user) => {
           if (err) return callback(err);
           if (!user) return callback(null, null);
-
-          return callback(null, user);
+          
+          // Check if user has a password field
+          if (!user.password) {
+            return callback(new Error("No password set for this customer"));
+          }
+          
+          bcrypt.compare(password, user.password, (err, isMatch) => {
+            if (err) return callback(err);
+            if (!isMatch) return callback(new Error("Invalid password"));
+            return callback(null, user);
+          });
         });
         break;
 
