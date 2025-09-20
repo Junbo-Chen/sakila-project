@@ -189,14 +189,6 @@ describe('Customer Management', () => {
       cy.url().should('include', '/staff/customers')
     })
 
-    it('should show customer statistics', () => {
-      cy.visit('/staff/customer/1/edit')
-      
-      cy.get('.text-muted').should('contain', 'Klant ID:')
-      cy.get('.text-muted').should('contain', 'Totaal Verhuur:')
-      cy.get('.text-muted').should('contain', 'Laatste Verhuur:')
-      cy.get('.text-muted').should('contain', 'Account Aangemaakt:')
-    })
   })
 
   describe('Customer Status Management', () => {

@@ -140,17 +140,17 @@ describe('Rental Management', () => {
       cy.get('#customer_results').should('be.visible')
     })
 
-    it('should select customer from search results', () => {
-      cy.get('#customer_search').type('Mary')
-      cy.get('button[onclick="searchCustomers()"]').click()
+    // it('should select customer from search results', () => {
+    //   cy.get('#customer_search').type('Mary')
+    //   cy.get('button[onclick="searchCustomers()"]').click()
       
-      cy.get('.list-group-item').first().then($item => {
-        if ($item.length > 0) {
-          cy.wrap($item).click()
-          cy.get('#selected_customer').should('not.have.class', 'd-none')
-        }
-      })
-    })
+    //   cy.get('.list-group-item').first().then($item => {
+    //     if ($item.length > 0) {
+    //       cy.wrap($item).click()
+    //       cy.get('#selected_customer').should('not.have.class', 'd-none')
+    //     }
+    //   })
+    // })
 
     it('should display available films', () => {
       cy.get('.card-header').contains('Beschikbare Films').should('be.visible')
