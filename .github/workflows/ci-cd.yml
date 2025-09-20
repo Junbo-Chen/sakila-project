@@ -9,84 +9,14 @@ on:
     # Run tests daily at 6 AM UTC
     - cron: '0 6 * * *'
 
-env:
-  # Database configuration
-  DATABASE_URL: ${{ secrets.DB_DATABASE }}
-  
-  # Application configuration
-  NODE_ENV: test
-  PORT: 3000
-  
-  # Test credentials (stored in GitHub Secrets)
-  CYPRESS_STAFF_EMAIL: ${{ secrets.STAFF_EMAIL }}
-  CYPRESS_STAFF_PASSWORD: ${{ secrets.STAFF_PASSWORD }}
-  CYPRESS_CUSTOMER_EMAIL: ${{ secrets.CUSTOMER_EMAIL }}
-  CYPRESS_CUSTOMER_PASSWORD: ${{ secrets.CUSTOMER_PASSWORD }}
-
 jobs:
   cypress-run:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [ 22.x]
-    
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: |
-          npm ci
-          npm install --save-dev cypress
-
-      - name: Setup database
-        run: |
-          # Run database migrations and seed data
-          npm run db:migrate
-          npm run db:seed
-
-      - name: Start application
-        run: |
-          npm start &
-          npx wait-on http://localhost:3000
-        env:
-          CI: true
-
-      - name: Run Cypress tests
+      - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          wait-on: 'http://localhost:3000'
-          wait-on-timeout: 120
-          browser: chrome
-          record: true
-          parallel: true
-
-      - name: Upload Cypress screenshots
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: cypress-screenshots-${{ matrix.node-version }}
-          path: cypress/screenshots
-
-      - name: Upload Cypress videos
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cypress-videos-${{ matrix.node-version }}
-          path: cypress/videos
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cypress-results-${{ matrix.node-version }}
-          path: |
-            cypress/reports
-            mochawesome-report
+          build: npm run build
+          start: npm start
