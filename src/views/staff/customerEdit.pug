@@ -9,10 +9,19 @@ block content
       i.bi.bi-arrow-left.me-1
       | Terug naar Klanten
 
+  // Succesmelding
+  if success
+    .alert.alert-success.alert-dismissible.fade.show
+      i.bi.bi-check-circle.me-2
+      | De klantgegevens zijn succesvol opgeslagen!
+      button.btn-close(type="button" data-bs-dismiss="alert")
+
+  // Foutmelding
   if error
-    .alert.alert-danger
+    .alert.alert-danger.alert-dismissible.fade.show
       i.bi.bi-exclamation-triangle.me-2
-      | #{error}
+      != error
+      button.btn-close(type="button" data-bs-dismiss="alert")
 
   if customer
     .card
@@ -21,38 +30,53 @@ block content
           i.bi.bi-person.me-2
           | #{customer.first_name} #{customer.last_name}
       .card-body
-        form(method="POST" action=`/staff/customer/${customer.customer_id}/edit`)
+        form(method="POST" action=`/staff/customer/${customer.customer_id}/edit` id="customerForm")
           .row
             .col-md-6
               .mb-3
-                label.form-label(for="first_name") Voornaam *
+                label.form-label(for="first_name") 
+                  | Voornaam 
+                  span.text-danger 
                 input.form-control(
                   type="text" 
                   name="first_name" 
                   id="first_name" 
-                  value=customer.first_name 
+                  value=customer.first_name || ''
                   required
+                  maxlength="45"
+                  placeholder="Voer de voornaam in"
                 )
+                .form-text.text-muted Verplicht veld
               
               .mb-3
-                label.form-label(for="last_name") Achternaam *
+                label.form-label(for="last_name") 
+                  | Achternaam 
+                  span.text-danger 
                 input.form-control(
                   type="text" 
                   name="last_name" 
                   id="last_name" 
-                  value=customer.last_name 
+                  value=customer.last_name || ''
                   required
+                  maxlength="45"
+                  placeholder="Voer de achternaam in"
                 )
+                .form-text.text-muted Verplicht veld
               
               .mb-3
-                label.form-label(for="email") Email *
+                label.form-label(for="email") 
+                  | E-mailadres 
+                  span.text-danger 
                 input.form-control(
                   type="email" 
                   name="email" 
                   id="email" 
-                  value=customer.email 
+                  value=customer.email || ''
                   required
+                  maxlength="50"
+                  placeholder="voorbeeld@email.nl"
                 )
+                .form-text.text-muted Verplicht veld - moet uniek zijn
               
               .mb-3
                 .form-check
@@ -60,9 +84,11 @@ block content
                     type="checkbox" 
                     name="active" 
                     id="active" 
-                    checked=customer.active
+                    checked=customer.active === 1 || customer.active === true
                   )
-                  label.form-check-label(for="active") Actieve Klant
+                  label.form-check-label(for="active") 
+                    | Klant is actief
+                .form-text.text-muted Inactieve klanten kunnen geen films huren
 
             .col-md-6
               .mb-3
@@ -71,7 +97,10 @@ block content
                   type="text" 
                   name="address" 
                   id="address" 
+                  required
                   value=customer.address || ''
+                  maxlength="50"
+                  placeholder="Straat + huisnummer"
                 )
               
               .mb-3
@@ -79,9 +108,13 @@ block content
                 input.form-control(
                   type="text" 
                   name="city" 
-                  id="city" 
+                  id="city"
+                  required 
                   value=customer.city || ''
+                  maxlength="50"
+                  placeholder="Plaatsnaam"
                 )
+                .form-text.text-muted 
               
               .mb-3
                 label.form-label(for="country") Land
@@ -89,82 +122,96 @@ block content
                   type="text" 
                   name="country" 
                   id="country" 
+                  required
                   value=customer.country || ''
+                  maxlength="50"
+                  placeholder="Landnaam"
                 )
+
               
               .mb-3
-                label.form-label Klant Statistieken
-                .small.text-muted
-                  p.mb-1
-                    strong Klant ID: 
-                    | #{customer.customer_id}
-                  p.mb-1
-                    strong Totaal Verhuur: 
-                    | #{customer.total_rentals || 0}
-                  p.mb-1
-                    strong Laatste Verhuur: 
-                    | #{customer.last_rental_date ? new Date(customer.last_rental_date).toLocaleDateString('nl-NL') : 'Nog nooit'}
-                  p.mb-0
-                    strong Account Aangemaakt: 
-                    | #{customer.create_date ? new Date(customer.create_date).toLocaleDateString('nl-NL') : 'Onbekend'}
+                .card.bg-light
+                  .card-header
+                    h6.mb-0 Klantinformatie
+                  .card-body.py-3
+                    .row.g-2.small
+                      .col-6
+                        strong Klantnummer: 
+                        span.text-primary #{customer.customer_id}
+                      .col-6
+                        strong Status: 
+                        if customer.active
+                          span.badge.bg-success Actief
+                        else
+                          span.badge.bg-secondary Inactief
+                      .col-6
+                        strong Films gehuurd: 
+                        span.text-info #{customer.total_rentals || 0}
+                      .col-6
+                        strong Laatste verhuur: 
+                        | #{customer.last_rental_date ? new Date(customer.last_rental_date).toLocaleDateString('nl-NL') : 'Nog nooit'}
+                      .col-12.mt-2
+                        strong Klant sinds: 
+                        | #{customer.create_date ? new Date(customer.create_date).toLocaleDateString('nl-NL') : 'Onbekend'}
 
-          .row.mt-4
+          hr.my-4
+
+          .row
             .col-12
-              .d-flex.justify-content-between
+              .d-flex.justify-content-between.align-items-center
                 div
-                  button.btn.btn-success(type="submit")
+                  button.btn.btn-success(type="submit" id="saveBtn")
                     i.bi.bi-check-circle.me-1
-                    | Wijzigingen Opslaan
+                    | Opslaan
                   
                   a.btn.btn-outline-secondary.ms-2(href="/staff/customers")
                     i.bi.bi-x-circle.me-1
                     | Annuleren
-                
-                div
-                  button.btn.btn-danger(
-                    type="button" 
-                    data-bs-toggle="modal" 
-                    data-bs-target="#deleteCustomerModal"
-                  )
-                    i.bi.bi-trash.me-1
-                    | Verwijderen
-
-    // Delete Confirmation Modal
-    #deleteCustomerModal.modal.fade(tabindex="-1")
-      .modal-dialog
-        .modal-content
-          .modal-header.bg-danger.text-white
-            h5.modal-title Klant Verwijderen
-            button.btn-close.btn-close-white(type="button" data-bs-dismiss="modal")
-          .modal-body
-            p 
-              strong Weet je zeker dat je deze klant wilt verwijderen?
-            p.text-danger
-              i.bi.bi-exclamation-triangle.me-2
-              | Deze actie kan niet ongedaan worden gemaakt.
-            .bg-light.p-3.rounded
-              p.mb-1
-                strong Naam: 
-                | #{customer.first_name} #{customer.last_name}
-              p.mb-1
-                strong Email: 
-                | #{customer.email}
-              p.mb-0
-                strong Totaal Verhuur: 
-                | #{customer.total_rentals || 0}
-          .modal-footer
-            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Annuleren
-            form(method="POST" action=`/staff/customer/${customer.customer_id}/delete` style="display: inline;")
-              button.btn.btn-danger(type="submit")
-                i.bi.bi-trash.me-1
-                | Definitief Verwijderen
 
   else
-    .alert.alert-warning.text-center
-      h4 
+    .alert.alert-warning.text-center.py-5
+      h4.mb-3
         i.bi.bi-exclamation-triangle.me-2
         | Klant niet gevonden
-      p Deze klant bestaat niet of kon niet worden geladen.
+      p.mb-4 De opgevraagde klant kon niet worden gevonden.
       a.btn.btn-primary(href="/staff/customers")
         i.bi.bi-arrow-left.me-1
         | Terug naar Klanten
+
+  // Gebruiksvriendelijke JavaScript
+  script.
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('customerForm');
+      const saveBtn = document.getElementById('saveBtn');
+      
+      if (form && saveBtn) {
+        // Toon loading tijdens opslaan
+        form.addEventListener('submit', function(e) {
+          saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Bezig met opslaan...';
+          saveBtn.disabled = true;
+        });
+        
+        // Simpele validatie feedback
+        const requiredFields = form.querySelectorAll('input[required]');
+        requiredFields.forEach(function(field) {
+          field.addEventListener('blur', function() {
+            if (this.value.trim() === '') {
+              this.style.borderColor = '#dc3545';
+            } else {
+              this.style.borderColor = '#198754';
+            }
+          });
+        });
+      }
+      
+      // Automatisch verdwijnen van meldingen
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(function(alert) {
+        setTimeout(function() {
+          if (alert.classList.contains('alert-success')) {
+            const closeBtn = alert.querySelector('.btn-close');
+            if (closeBtn) closeBtn.click();
+          }
+        }, 5000); // Succesmeldingen verdwijnen na 5 seconden
+      });
+    });

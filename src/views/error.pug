@@ -1,30 +1,33 @@
 extends layout
 
 block content
-  .row
-    .col-lg-8.mx-auto
-      .card.border-danger
-        .card-header.bg-danger.text-white
-          h4.mb-0
-            i.bi.bi-exclamation-triangle.me-2
-            | Er is een fout opgetreden
-        .card-body
-          h2.text-danger= message
-          
-          if error.status
-            .alert.alert-warning
-              strong Status Code: 
-              | #{error.status}
-          
-          if error.stack && (process.env.NODE_ENV === 'development')
-            .alert.alert-secondary
-              h5 Stack Trace (Development Mode):
-              pre.small= error.stack
-          
-          .mt-4
-            a.btn.btn-primary.me-2(href="/") 
-              i.bi.bi-house.me-1
-              | Terug naar Home
-            //- a.btn.btn-secondary(href="/actor") 
-            //-   i.bi.bi-people.me-1
-            //-   | Bekijk Actors
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-8.col-lg-6
+        .card.border-warning
+          .card-body.text-center.py-5
+            .mb-4
+              i.bi.bi-exclamation-triangle.text-warning(style="font-size: 4rem;")
+            
+            h3.text-warning.mb-3= title || 'Er ging iets mis'
+            
+            p.lead.mb-4= message || 'Er is een probleem opgetreden'
+            
+            .d-flex.flex-column.flex-sm-row.gap-2.justify-content-center
+              if backUrl
+                a.btn.btn-primary(href=backUrl)
+                  i.bi.bi-arrow-left.me-1
+                  | Ga terug
+              else
+                a.btn.btn-primary(href="/staff/dashboard")
+                  i.bi.bi-house.me-1
+                  | Naar Dashboard
+            
+
+  script.
+    // Alleen voor bepaalde error types
+    if (window.location.search.includes('redirect=true')) {
+      setTimeout(function() {
+        window.location.href = '/staff/dashboard';
+      }, 30000);
+    }
