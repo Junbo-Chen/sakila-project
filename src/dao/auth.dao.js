@@ -14,7 +14,7 @@ const authDAO = {
 
   getCustomerByEmail: (email, callback) => {
     pool.query(
-      "SELECT customer_id, first_name, last_name, email FROM customer WHERE email = ?",
+      "SELECT customer_id, first_name, last_name, email, password FROM customer WHERE email = ?",
       [email],
       (err, results) => {
         if (err) return callback(err);

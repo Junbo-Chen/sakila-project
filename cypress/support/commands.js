@@ -20,16 +20,6 @@ Cypress.Commands.add('loginAsStaff', (email = Cypress.env('STAFF_EMAIL'), passwo
   })
 })
 
-Cypress.Commands.add('loginAsCustomer', (email = Cypress.env('CUSTOMER_EMAIL')) => {
-  cy.session([email, 'customer'], () => {
-    cy.visit('/auth/login')
-    cy.get('#email').type(email)
-    cy.get('#role').select('customer')
-    cy.get('form').submit()
-    cy.url().should('include', '/customer/dashboard')
-  })
-})
-
 // -- Navigation Commands --
 Cypress.Commands.add('navigateToActors', () => {
   cy.visit('/actor')
@@ -132,4 +122,14 @@ Cypress.Commands.add('closeModal', (modalId) => {
 Cypress.Commands.add('checkA11y', () => {
   cy.injectAxe()
   cy.checkA11y(null, null, cy.terminalLog)
+})
+Cypress.Commands.add('loginAsCustomer', (email = Cypress.env('CUSTOMER_EMAIL'), password = Cypress.env('CUSTOMER_PASSWORD')) => {
+  cy.session([email, password, 'customer'], () => {
+    cy.visit('/auth/login')
+    cy.get('#email').type(email)
+    cy.get('#password').type(password)
+    cy.get('#role').select('customer')
+    cy.get('form').submit()
+    cy.url().should('include', '/customer/dashboard')
+  })
 })
