@@ -1,0 +1,498 @@
+extends layout
+
+block content
+  style.
+    .hero-section {
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+      color: white;
+      padding: 80px 0;
+      margin: -2rem -15px 2rem -15px;
+    }
+    .feature-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: none;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .epic-badge {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border: none;
+    }
+    .story-card {
+      border-left: 4px solid #667eea;
+      background: #f8f9fa;
+    }
+
+  // Hero Section
+  .hero-section
+    .container.text-center
+      h1.display-3.mb-4
+        i.bi.bi-film.me-3
+        | Sakila Dashboard
+      p.lead.mb-5 Een moderne MVC applicatie voor filmdatabase beheer
+      .row.justify-content-center
+        .col-md-8
+          p.fs-5
+            | Deze applicatie is gebouwd voor het beheren van de Sakila database, 
+            | met verschillende rollen en functionaliteiten voor staff en klanten.
+
+  // Technische Stack
+  section.mb-5
+    .row
+      .col-12.text-center.mb-5
+        h2.display-5.text-primary Technische Stack
+    .row
+      .col-md-3.mb-4
+        .card.feature-card.h-100.text-center.p-4
+          i.bi.bi-server.fs-1.text-success.mb-3
+          h5 Node.js & Express
+          p.text-muted Backend framework voor server-side logica
+      .col-md-3.mb-4
+        .card.feature-card.h-100.text-center.p-4
+          i.bi.bi-database.fs-1.text-primary.mb-3
+          h5 MySQL & Sakila DB
+          p.text-muted Relationele database met sample film data
+      .col-md-3.mb-4
+        .card.feature-card.h-100.text-center.p-4
+          i.bi.bi-palette.fs-1.text-warning.mb-3
+          h5 Pug & Bootstrap
+          p.text-muted Template engine en responsive design
+      .col-md-3.mb-4
+        .card.feature-card.h-100.text-center.p-4
+          i.bi.bi-shield-check.fs-1.text-info.mb-3
+          h5 Session & Auth
+          p.text-muted Veilige authenticatie en autorisatie
+
+  // User Stories & Epics
+  section.mb-5
+    .row
+      .col-12.text-center.mb-5
+        h2.display-5.text-primary User Stories & Functionaliteiten
+        p.text-muted Georganiseerd in Epics met acceptatiecriteria
+
+    // Epic 1: Authentication & Authorization
+    .card.mb-4
+      .card-header.bg-gradient.text-white.epic-badge
+        h3.mb-0
+          i.bi.bi-shield-lock.me-2
+          | Epic 1: Authentication & Authorization
+      .card-body
+        .row.mb-4
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Gebruikers kunnen inloggen met email en wachtwoord
+              li Verschillende rollen hebben verschillende toegang (staff vs customer)
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Sessies worden veilig beheerd en verlopen automatisch
+              li Ongeautoriseerde toegang wordt geblokkeerd met redirect naar login
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-person-circle.me-1
+            | US-001: Login Functionaliteit
+          p.mb-1
+            strong Als 
+            | een gebruiker
+          p.mb-1
+            strong Wil ik 
+            | kunnen inloggen met mijn email en wachtwoord
+          p.mb-0
+            strong Zodat 
+            | ik toegang krijg tot het systeem op basis van mijn rol
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-box-arrow-right.me-1
+            | US-002: Logout Functionaliteit
+          p.mb-1
+            strong Als 
+            | een ingelogde gebruiker
+          p.mb-1
+            strong Wil ik 
+            | kunnen uitloggen
+          p.mb-0
+            strong Zodat 
+            | mijn sessie veilig wordt beëindigd
+
+        .story-card.p-3
+          h6.text-primary.mb-2
+            i.bi.bi-shield-check.me-1
+            | US-003: Rol-gebaseerde Toegang
+          p.mb-1
+            strong Als 
+            | het systeem
+          p.mb-1
+            strong Wil ik 
+            | gebruikers doorsturen naar hun juiste dashboard
+          p.mb-0
+            strong Zodat 
+            | staff en customers verschillende functionaliteiten zien
+
+    // Epic 2: Staff Dashboard & Analytics
+    .card.mb-4
+      .card-header.bg-gradient.text-white.epic-badge
+        h3.mb-0
+          i.bi.bi-speedometer2.me-2
+          | Epic 2: Staff Dashboard & Analytics
+      .card-body
+        .row.mb-4
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Dashboard toont real-time statistieken (actieve verhuur, omzet, etc.)
+              li Snelle toegang tot belangrijkste functies via action buttons
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Statistieken worden automatisch bijgewerkt bij database wijzigingen
+              li Dashboard is responsive en werkt op mobiele apparaten
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-graph-up.me-1
+            | US-004: Dashboard Statistieken
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | een overzicht zien van belangrijke statistieken
+          p.mb-0
+            strong Zodat 
+            | ik snel inzicht krijg in actieve verhuur en omzet
+
+        .story-card.p-3
+          h6.text-primary.mb-2
+            i.bi.bi-lightning.me-1
+            | US-005: Snelle Acties
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | snelle toegang tot vaak gebruikte functies
+          p.mb-0
+            strong Zodat 
+            | ik efficiënt kan navigeren naar verhuur en klantenbeheer
+
+    // Epic 3: Rental Management
+    .card.mb-4
+      .card-header.bg-gradient.text-white.epic-badge
+        h3.mb-0
+          i.bi.bi-film.me-2
+          | Epic 3: Rental Management
+      .card-body
+        .row.mb-4
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Staff kan nieuwe verhuur aanmaken door klant en film te selecteren
+              li Alleen beschikbare films worden getoond in de selectie
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Actieve verhuur wordt overzichtelijk getoond met status indicators
+              li Films kunnen eenvoudig geretourneerd worden met confirmatie
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-plus-circle.me-1
+            | US-006: Nieuwe Verhuur Aanmaken
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | een nieuwe verhuur kunnen aanmaken door een klant en film te selecteren
+          p.mb-0
+            strong Zodat 
+            | klanten films kunnen huren en ik dit kan registreren
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-search.me-1
+            | US-007: Film Zoeken en Filteren
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | films kunnen zoeken en filteren op categorie
+          p.mb-0
+            strong Zodat 
+            | ik snel de juiste film kan vinden voor verhuur
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-list.me-1
+            | US-008: Actieve Verhuur Bekijken
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | alle actieve verhuur kunnen bekijken
+          p.mb-0
+            strong Zodat 
+            | ik weet welke films nog uit zijn en status kan monitoren
+
+        .story-card.p-3
+          h6.text-primary.mb-2
+            i.bi.bi-check-circle.me-1
+            | US-009: Film Retourneren
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | een geretourneerde film kunnen registreren
+          p.mb-0
+            strong Zodat 
+            | de verhuur wordt afgesloten en film weer beschikbaar is
+
+    // Epic 4: Customer Management
+    .card.mb-4
+      .card-header.bg-gradient.text-white.epic-badge
+        h3.mb-0
+          i.bi.bi-people.me-2
+          | Epic 4: Customer Management
+      .card-body
+        .row.mb-4
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Staff kan nieuwe klanten aanmaken met alle benodigde gegevens
+              li Klantgegevens kunnen volledig bewerkt worden inclusief adresgegevens
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Zoekfunctie werkt op naam en email met real-time resultaten
+              li Klantdetails tonen verhuurgeschiedenis en statistieken
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-person-plus.me-1
+            | US-010: Nieuwe Klant Aanmaken
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | een nieuwe klant kunnen registreren
+          p.mb-0
+            strong Zodat 
+            | nieuwe klanten films kunnen huren
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-pencil.me-1
+            | US-011: Klantgegevens Bewerken
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | klantgegevens kunnen wijzigen
+          p.mb-0
+            strong Zodat 
+            | klantinformatie actueel blijft
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-search.me-1
+            | US-012: Klanten Zoeken
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | klanten kunnen zoeken op naam of email
+          p.mb-0
+            strong Zodat 
+            | ik snel de juiste klant kan vinden
+
+        .story-card.p-3
+          h6.text-primary.mb-2
+            i.bi.bi-info-circle.me-1
+            | US-013: Klantdetails Bekijken
+          p.mb-1
+            strong Als 
+            | een staff lid
+          p.mb-1
+            strong Wil ik 
+            | uitgebreide klantinformatie en verhuurgeschiedenis kunnen bekijken
+          p.mb-0
+            strong Zodat 
+            | ik beter service kan verlenen
+
+    // Epic 5: Customer Experience
+    .card.mb-4
+      .card-header.bg-gradient.text-white.epic-badge
+        h3.mb-0
+          i.bi.bi-person-heart.me-2
+          | Epic 5: Customer Experience
+      .card-body
+        .row.mb-4
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Klanten hebben een persoonlijk dashboard met welkomstbericht
+              li Dashboard toont relevante informatie voor de klant
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Interface is gebruiksvriendelijk en intuïtief voor klanten
+              li Klanten kunnen veilig inloggen en uitloggen
+
+        .story-card.p-3
+          h6.text-primary.mb-2
+            i.bi.bi-house-heart.me-1
+            | US-014: Customer Dashboard
+          p.mb-1
+            strong Als 
+            | een klant
+          p.mb-1
+            strong Wil ik 
+            | een persoonlijk dashboard hebben
+          p.mb-0
+            strong Zodat 
+            | ik een goede ervaring heb en me welkom voel
+
+    // Epic 6: User Interface & Experience
+    .card.mb-4
+      .card-header.bg-gradient.text-white.epic-badge
+        h3.mb-0
+          i.bi.bi-palette2.me-2
+          | Epic 6: User Interface & Experience
+      .card-body
+        .row.mb-4
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Success acties tonen bevestiging via aantrekkelijke popups
+              li Belangrijke acties vragen om bevestiging voordat uitvoering
+          .col-md-6
+            h5.text-primary Acceptatiecriteria:
+            ul
+              li Interface is responsive en werkt op alle apparaat groottes
+              li Design is modern en professioneel met consistente styling
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-check-circle.me-1
+            | US-015: Success Feedback
+          p.mb-1
+            strong Als 
+            | een gebruiker
+          p.mb-1
+            strong Wil ik 
+            | duidelijke bevestiging krijgen wanneer acties succesvol zijn
+          p.mb-0
+            strong Zodat 
+            | ik weet dat mijn actie is gelukt
+
+        .story-card.p-3.mb-3
+          h6.text-primary.mb-2
+            i.bi.bi-exclamation-triangle.me-1
+            | US-016: Bevestigingsdialogen
+          p.mb-1
+            strong Als 
+            | een gebruiker
+          p.mb-1
+            strong Wil ik 
+            | om bevestiging gevraagd worden bij belangrijke acties
+          p.mb-0
+            strong Zodat 
+            | ik geen ongewenste wijzigingen maak
+
+        .story-card.p-3
+          h6.text-primary.mb-2
+            i.bi.bi-phone.me-1
+            | US-017: Responsive Design
+          p.mb-1
+            strong Als 
+            | een gebruiker
+          p.mb-1
+            strong Wil ik 
+            | de applicatie kunnen gebruiken op verschillende apparaten
+          p.mb-0
+            strong Zodat 
+            | ik ook onderweg toegang heb tot het systeem
+
+  // Features Overview
+  section.mb-5
+    .row
+      .col-12.text-center.mb-5
+        h2.display-5.text-primary Belangrijkste Features
+    .row
+      .col-md-4.mb-4
+        .card.feature-card.h-100.p-4
+          .text-center.mb-3
+            i.bi.bi-shield-check.fs-1.text-success
+          h5.text-center.mb-3 Veilige Authenticatie
+          ul.list-unstyled
+            li
+              i.bi.bi-check.text-success.me-2
+              | Rol-gebaseerde toegang
+            li
+              i.bi.bi-check.text-success.me-2
+              | Sessie management
+            li
+              i.bi.bi-check.text-success.me-2
+              | Wachtwoord encryptie
+      .col-md-4.mb-4
+        .card.feature-card.h-100.p-4
+          .text-center.mb-3
+            i.bi.bi-graph-up.fs-1.text-primary
+          h5.text-center.mb-3 Real-time Dashboard
+          ul.list-unstyled
+            li
+              i.bi.bi-check.text-success.me-2
+              | Live statistieken
+            li
+              i.bi.bi-check.text-success.me-2
+              | Omzet tracking
+            li
+              i.bi.bi-check.text-success.me-2
+              | Verhuur overzicht
+      .col-md-4.mb-4
+        .card.feature-card.h-100.p-4
+          .text-center.mb-3
+            i.bi.bi-search.fs-1.text-info
+          h5.text-center.mb-3 Geavanceerd Zoeken
+          ul.list-unstyled
+            li
+              i.bi.bi-check.text-success.me-2
+              | Film zoeken & filteren
+            li
+              i.bi.bi-check.text-success.me-2
+              | Klant zoekfunctie
+            li
+              i.bi.bi-check.text-success.me-2
+              | Real-time resultaten
+
+  // Project Info
+  section.text-center
+    .card.bg-dark.text-white
+      .card-body.p-5
+        h3.mb-4 Over Dit Project
+        p.lead.mb-4
+          | De Sakila Dashboard applicatie is gebouwd als een moderne MVC web applicatie 
+          | die de kracht van Node.js, Express, en MySQL combineert om een complete 
+          | filmverhuur management systeem te bieden.
+        .row
+          .col-md-4
+            h5.text-primary 17 User Stories
+            p Verdeeld over 6 Epics
+          .col-md-4
+            h5.text-primary 2 Gebruikersrollen
+            p Staff & Customer
+          .col-md-4
+            h5.text-primary 100% Responsive
+            p Werkt op alle apparaten
