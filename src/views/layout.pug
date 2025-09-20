@@ -45,3 +45,150 @@ html
         block content
     
     script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js")
+    
+    // Success Popup Helper Functions
+    script.
+      const SuccessPopup = {
+        show: (title, message) => {
+          Swal.fire({
+            icon: 'success',
+            title: title,
+            text: message,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#28a745',
+            timer: 3000,
+            timerProgressBar: true
+          });
+        },
+
+        showWithRedirect: (title, message, redirectUrl, delay = 2000) => {
+          Swal.fire({
+            icon: 'success',
+            title: title,
+            text: message,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#28a745',
+            timer: delay,
+            timerProgressBar: true
+          }).then(() => {
+            window.location.href = redirectUrl;
+          });
+        },
+
+        showAutoClose: (title, message, delay = 2000) => {
+          Swal.fire({
+            icon: 'success',
+            title: title,
+            text: message,
+            showConfirmButton: false,
+            timer: delay,
+            timerProgressBar: true,
+            toast: true,
+            position: 'top-end'
+          });
+        },
+
+        actorCreated: (actorName) => {
+          SuccessPopup.show('Actor Toegevoegd!', `${actorName} is succesvol toegevoegd.`);
+        },
+
+        actorUpdated: (actorName) => {
+          SuccessPopup.show('Actor Bijgewerkt!', `${actorName} is succesvol bijgewerkt.`);
+        },
+
+        actorDeleted: (actorName) => {
+          SuccessPopup.show('Actor Verwijderd!', `${actorName} is verwijderd.`);
+        },
+
+        customerCreated: (customerName) => {
+          SuccessPopup.show('Klant Aangemaakt!', `${customerName} is succesvol aangemaakt.`);
+        },
+
+        customerUpdated: (customerName) => {
+          SuccessPopup.show('Klant Bijgewerkt!', `${customerName} is bijgewerkt.`);
+        },
+
+        rentalCreated: (filmTitle, customerName) => {
+          SuccessPopup.show('Verhuur Aangemaakt!', `${filmTitle} is verhuurd aan ${customerName}.`);
+        },
+
+        rentalReturned: (filmTitle) => {
+          SuccessPopup.show('Film Geretourneerd!', `${filmTitle} is geretourneerd.`);
+        }
+      };
+
+      const ErrorPopup = {
+        show: (title, message) => {
+          Swal.fire({
+            icon: 'error',
+            title: title,
+            text: message,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#dc3545'
+          });
+        }
+      };
+
+      const ConfirmPopup = {
+        show: (title, message, confirmCallback) => {
+          Swal.fire({
+            title: title,
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ja, doorgaan!',
+            cancelButtonText: 'Annuleren'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              confirmCallback();
+            }
+          });
+        }
+      };
+      
+      // Check for success/error messages in URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const successMsg = urlParams.get('success');
+      const errorMsg = urlParams.get('error');
+      const successType = urlParams.get('type');
+      
+      if (successMsg) {
+        // Add a small delay to ensure page is fully loaded
+        setTimeout(() => {
+          switch(successType) {
+            // Actor popups verwijderd
+            case 'customer_created':
+              SuccessPopup.customerCreated(decodeURIComponent(successMsg));
+              break;
+            case 'customer_updated':
+              SuccessPopup.customerUpdated(decodeURIComponent(successMsg));
+              break;
+            case 'rental_created':
+              SuccessPopup.rentalCreated(decodeURIComponent(successMsg), urlParams.get('customer') || '');
+              break;
+            default:
+              // Alleen tonen voor customer en rental operaties
+              if (successType && (successType.includes('customer_') || successType.includes('rental_'))) {
+                SuccessPopup.show('Succes!', decodeURIComponent(successMsg));
+              }
+          }
+        }, 500);
+        
+        // Clean URL after showing popup
+        setTimeout(() => {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }, 1000);
+      }
+      
+      if (errorMsg) {
+        setTimeout(() => {
+          ErrorPopup.show('Fout!', decodeURIComponent(errorMsg));
+        }, 500);
+        
+        // Clean URL
+        setTimeout(() => {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }, 1000);
+      }
