@@ -5,7 +5,21 @@
   "main": "index.js",
   "scripts": {
     "start": "node bin/www",
-    "dev": "nodemon bin/www"
+    "dev": "nodemon bin/www",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "cypress:run:chrome": "cypress run --browser chrome",
+    "cypress:run:firefox": "cypress run --browser firefox",
+    "test:e2e": "cypress run --spec 'cypress/e2e/**/*'",
+    "test:e2e:headed": "cypress run --headed --spec 'cypress/e2e/**/*'",
+    "test:auth": "cypress run --spec 'cypress/e2e/auth.cy.js'",
+    "test:actors": "cypress run --spec 'cypress/e2e/actors.cy.js'",
+    "test:staff": "cypress run --spec 'cypress/e2e/staff-dashboard.cy.js'",
+    "test:rentals": "cypress run --spec 'cypress/e2e/rental-management.cy.js'",
+    "test:customers": "cypress run --spec 'cypress/e2e/customer-management.cy.js'",
+    "test:smoke": "cypress run --spec 'cypress/e2e/auth.cy.js,cypress/e2e/staff-dashboard.cy.js'",
+    "test:ci": "cypress run --record --key your-record-key",
+    "test:parallel": "cypress run --parallel --record --key your-record-key"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +40,8 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
+    "cypress": "^13.6.0",
+    "cypress-axe": "^1.7.0",
     "nodemon": "^3.0.1"
   }
 }

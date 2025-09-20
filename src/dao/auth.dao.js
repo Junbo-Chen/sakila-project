@@ -22,18 +22,6 @@ const authDAO = {
       }
     );
   },
-
-  getAdminByEmail: (email, callback) => {
-    // Admin bestaat niet standaard in Sakila → we simuleren dit met staff id = 1
-    pool.query(
-      "SELECT staff_id, first_name, last_name, email FROM staff WHERE staff_id = 1 AND email = ?",
-      [email],
-      (err, results) => {
-        if (err) return callback(err);
-        callback(null, results[0] || null);
-      }
-    );
-  }
 };
 
 module.exports = authDAO;
