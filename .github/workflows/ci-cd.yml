@@ -61,7 +61,7 @@ jobs:
           DB_HOST: 127.0.0.1
           DB_USER: root
           DB_PASSWORD: root
-          DB_DATABASE: sakila_test
+          DB_DATABASE: sakila
           DB_PORT: 3306
           SESSION_SECRET: test-secret-key
 
